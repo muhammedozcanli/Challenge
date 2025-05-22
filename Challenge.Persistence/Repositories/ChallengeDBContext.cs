@@ -1,12 +1,5 @@
 ﻿using Challenge.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Challenge.Persistence.Repositories
 {
@@ -25,103 +18,83 @@ namespace Challenge.Persistence.Repositories
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //#region Balance
-            //List<Balance> balanceSeed = new List<Balance>
-            //{
-            //    new Balance
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        UserId = 1,
-            //        AvailableBalance = 10,
-            //        BlockedBalance = 0,
-            //        Currency = "USD",
-            //        LastUpdated = DateTime.UtcNow,
-                    
-                    
-            //    },
-            //    new Balance
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        UserId = 2,
-            //        AvailableBalance = 20,
-            //        BlockedBalance = 0,
-            //        Currency = "USD",
-            //        LastUpdated = DateTime.UtcNow,
-            //    },
-            //};
-            //#endregion
+            #region Balance
+            List<Balance> balanceSeed = new List<Balance>
+            {
+                new Balance
+                {
+                    Id = new Guid("00000000-aaaa-bbbb-cccc-111111111111"),
+                    UserId = Guid.Parse("550e8400-e29b-41d4-a716-446655440000"),
+                    AvailableBalance = 10,
+                    BlockedBalance = 0,
+                    Currency = "USD",
+                    LastUpdated = DateTime.Parse("2023-06-15T10:30:00Z", null, System.Globalization.DateTimeStyles.AdjustToUniversal)
+                },
+            };
+            #endregion
 
-            //#region Error
-            //List<Error> errorSeed = new List<Error>
-            //{
-            //    new Error
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        Name = "Error1"
-            //    },
-            //    new Error
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        Name = "Error2"
-            //    },
-            //};
-            //#endregion
+            #region Product
 
-            //#region PreOrder
-            //List<PreOrder> preOrderSeed = new List<PreOrder>
-            //{
-            //    new PreOrder
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        OrderId = 1,
-            //        Amount = 10,
-            //        CreatedDate = DateTime.UtcNow.AddMinutes(-5),
-            //        CompletedAt = DateTime.UtcNow,
-            //        Status = "Completed"
-            //    },
-            //    new PreOrder
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        OrderId = 2,
-            //        Amount = 5,
-            //        CancelledAt = DateTime.UtcNow,
-            //        CreatedDate = DateTime.UtcNow.AddMinutes(-5),
-            //        Status = "Cancelled"
+            List<Product> productSeed = new List<Product>
+            {
+                new Product
+                {
+                    Id = new Guid("a1b2c3d4-e5f6-4111-aaaa-111111111111"),
+                    Name = "Premium Smartphone",
+                    Description = "Latest model with advanced features",
+                    Price = 19.99,
+                    Currency = "USD",
+                    Category = "Electronics",
+                    Stock = 42
+                },
+                new Product
+                {
+                    Id = new Guid("b2c3d4e5-f6a7-4222-bbbb-222222222222"),
+                    Name = "Wireless Headphones",
+                    Description = "Noise-cancelling with premium sound quality",
+                    Price = 14.99,
+                    Currency = "USD",
+                    Category = "Electronics",
+                    Stock = 78
+                },
+                new Product
+                {
+                    Id = new Guid("c3d4e5f6-a7b8-4333-cccc-333333333333"),
+                    Name = "Smart Watch",
+                    Description = "Fitness tracking and notifications",
+                    Price = 12.99,
+                    Currency = "USD",
+                    Category = "Electronics",
+                    Stock = 0
+                },
+                new Product
+                {
+                    Id = new Guid("d4e5f6a7-b8c9-4444-dddd-444444444444"),
+                    Name = "Laptop",
+                    Description = "High-performance for work and gaming",
+                    Price = 19.99,
+                    Currency = "USD",
+                    Category = "Electronics",
+                    Stock = 15
+                },
+                new Product
+                {
+                    Id = new Guid("e5f6a7b8-c9d0-4555-eeee-555555555555"),
+                    Name = "Wireless Charger",
+                    Description = "Fast charging for compatible devices",
+                    Price = 9.99,
+                    Currency = "USD",
+                    Category = "Accessories",
+                    Stock = 120
+                }
+            };
 
-            //    },
-            //};
-            //#endregion
+            #endregion
 
-            //#region Product
+            modelBuilder.Entity<Balance>().HasData(balanceSeed);
+            modelBuilder.Entity<Product>().HasData(productSeed);
 
-            //List<Product> productSeed = new List<Product>
-            //{
-            //    new Product
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        Name = "Product1",
-            //        Description = "Product1 description",
-            //        Category = "Product1 Category",
-            //        Price = 10,
-            //        Stock = 50
-            //    },
-            //    new Product
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        Name = "Product2",
-            //        Description = "Product2 description",
-            //        Category = "Product2 Category",
-            //        Price = 5,
-            //        Stock = 70
-            //    },
-            // };
-
-            //#endregion
-
-            //modelBuilder.Entity<Balance>().HasData(balanceSeed);
-            //modelBuilder.Entity<Error>().HasData(errorSeed);
-            //modelBuilder.Entity<PreOrder>().HasData(preOrderSeed);
-            //modelBuilder.Entity<Product>().HasData(productSeed);
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

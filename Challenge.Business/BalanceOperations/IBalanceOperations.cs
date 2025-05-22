@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Challenge.Persistence.Manager.Abstract
+namespace Challenge.Business.BalanceOperations
 {
-    public interface IBalanceManager
+    public interface IBalanceOperations
     {
         IEnumerable<BalanceDTO> GetBalances();
         bool UpdateBalance(BalanceDTO balanceDTO);

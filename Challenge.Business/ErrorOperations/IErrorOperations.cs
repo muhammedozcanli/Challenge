@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Challenge.Persistence.Manager.Abstract
+namespace Challenge.Business.ErrorOperations
 {
-    public interface IProductManager
+    public interface IErrorOperations
     {
-        IEnumerable<ProductDTO> GetProducts();
+        bool AddError(ErrorDTO errorDTO);
     }
 }

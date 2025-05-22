@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Challenge.Persistence.Manager.Abstract
+namespace Challenge.Business.ProductOperations
 {
-    public interface IProductManager
+    public interface IProductOperations
     {
         IEnumerable<ProductDTO> GetProducts();
     }

@@ -9,7 +9,7 @@ namespace Challenge.Persistence.Entities
 {
     public class PreOrder : AuditableEntity
     {
-        public int OrderId { get; set; }
+        public Guid OrderId { get; set; }
         public int Amount { get; set; }
         public string? Status { get; set; }
         public DateTime? CompletedAt { get; set; }
