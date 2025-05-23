@@ -9,7 +9,7 @@ using System;
 
 namespace Challenge.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/balance")]
     [ApiController]
     public class BalanceController : ControllerBase
     {
@@ -22,6 +22,7 @@ namespace Challenge.API.Controllers
             _balanceOperations = balanceOperations;
             _errorOperations = errorOperations;
         }
+
         [HttpGet]
         [SwaggerOperation(Summary = "Get user balance", Description = "Retrieves the current balance information for the user")]
         public IActionResult GetBalance()
@@ -29,56 +30,26 @@ namespace Challenge.API.Controllers
             try
             {
                 var balance = _balanceOperations.GetBalances().FirstOrDefault();
-
-                if (balance is null)
-                {
-                    var error = new ErrorDTO
-                    {
-                        Name = "NotFound",
-                        Message = "Balance not found"
-                    };
-
-                    _errorOperations.AddError(error);
-
-                    return ResponseHelper.Error(404, error.Name, error.Message);
-                }
+                if (balance == null)
+                    return NotFoundWithError("Balance not found");
 
                 var data = new
                 {
-                    userId = balance.UserId,
+                    balance.UserId,
                     totalBalance = balance.AvailableBalance + balance.BlockedBalance,
                     availableBalance = balance.AvailableBalance,
                     blockedBalance = balance.BlockedBalance,
-                    currency = balance.Currency,
-                    lastUpdated = balance.LastUpdated
+                    balance.Currency,
+                    balance.LastUpdated
                 };
 
                 return ResponseHelper.Success(data);
             }
             catch (Exception ex)
             {
-                var error = new ErrorDTO
-                {
-                    Name = ex.GetType().Name,
-                    Message = ex.Message       
-                };
-
-                _errorOperations.AddError(error);   
-
-                return ResponseHelper.Error(
-                    statusCode: ex switch
-                    {
-                        ArgumentNullException => 400,
-                        UnauthorizedAccessException => 401,
-                        KeyNotFoundException => 404,
-                        _ => 500
-                    },
-                    name: error.Name ?? "UnhandledException",
-                    message: error.Message ?? "An unexpected error occurred."
-                );
+                return HandleException(ex);
             }
         }
-
 
         [HttpPost("preorder")]
         [SwaggerOperation(Summary = "Create a pre-order", Description = "Creates a pre-order and blocks the specified amount from the available balance")]
@@ -87,58 +58,27 @@ namespace Challenge.API.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return ResponseHelper.Error(
-                        400,
-                        "ValidationError",
-                        "Required fields are missing or invalid."
-                    );
-                }
+                    return ValidationError("Required fields are missing or invalid.");
 
                 var balance = _balanceOperations.GetBalances().FirstOrDefault();
-
                 if (balance == null)
-                {
-                    var error = new ErrorDTO
-                    {
-                        Name = "NotFound",
-                        Message = "Balance not found"
-                    };
-
-                    _errorOperations.AddError(error);
-
-                    return ResponseHelper.Error(404, error.Name, error.Message);
-                }
+                    return NotFoundWithError("Balance not found");
 
                 if (balance.AvailableBalance < request.Amount)
-                {
-                    return ResponseHelper.Error(
-                        400,
-                        "InsufficientBalance",
-                        "Insufficient available balance for pre-order."
-                    );
-                }
+                    return Error(400, "InsufficientBalance", "Insufficient available balance for pre-order.");
 
                 balance.BlockedBalance += request.Amount;
                 balance.AvailableBalance -= request.Amount;
 
-                var updateResult = _balanceOperations.UpdateBalance(balance);
-
-                if (!updateResult)
-                {
-                    return ResponseHelper.Error(
-                        500,
-                        "UpdateFailed",
-                        "Failed to update balance."
-                    );
-                }
+                if (!_balanceOperations.UpdateBalance(balance))
+                    return Error(500, "UpdateFailed", "Failed to update balance.");
 
                 var preOrder = new PreOrder
                 {
                     OrderId = request.OrderId,
                     Amount = request.Amount,
                     Status = "PreOrder created!",
-                    CreatedDate = DateTime.UtcNow,
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 _dbContext.PreOrders.Add(preOrder);
@@ -152,23 +92,7 @@ namespace Challenge.API.Controllers
             }
             catch (Exception ex)
             {
-                var error = new ErrorDTO
-                {
-                    Name = ex.GetType().Name ?? "UnhandledException",
-                    Message = ex.Message ?? "An unexpected error occurred."
-                };
-
-                _errorOperations.AddError(error);
-
-                int statusCode = ex switch
-                {
-                    ArgumentNullException => 400,
-                    UnauthorizedAccessException => 401,
-                    KeyNotFoundException => 404,
-                    _ => 500
-                };
-
-                return ResponseHelper.Error(statusCode, error.Name, error.Message);
+                return HandleException(ex);
             }
         }
 
@@ -179,33 +103,14 @@ namespace Challenge.API.Controllers
             try
             {
                 if (orderId == Guid.Empty)
-                {
-                    return ResponseHelper.Error(
-                        400,
-                        "ValidationError",
-                        "OrderId is required and must be valid."
-                    );
-                }
+                    return ValidationError("OrderId is required and must be valid.");
 
                 var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId);
-
                 if (preOrder == null)
-                {
-                    return ResponseHelper.Error(
-                        404,
-                        "NotFound",
-                        "PreOrder not found with the specified OrderId."
-                    );
-                }
+                    return NotFoundWithError("PreOrder not found with the specified OrderId.");
 
                 if (preOrder.CompletedAt != null)
-                {
-                    return ResponseHelper.Error(
-                        400,
-                        "AlreadyCompleted",
-                        "This order has already been completed."
-                    );
-                }
+                    return Error(400, "AlreadyCompleted", "This order has already been completed.");
 
                 preOrder.Status = "Completed";
                 preOrder.CompletedAt = DateTime.UtcNow;
@@ -222,25 +127,10 @@ namespace Challenge.API.Controllers
             }
             catch (Exception ex)
             {
-                var error = new ErrorDTO
-                {
-                    Name = ex.GetType().Name ?? "UnhandledException",
-                    Message = ex.Message ?? "An unexpected error occurred."
-                };
-
-                _errorOperations.AddError(error);
-
-                int statusCode = ex switch
-                {
-                    ArgumentNullException => 400,
-                    UnauthorizedAccessException => 401,
-                    KeyNotFoundException => 404,
-                    _ => 500
-                };
-
-                return ResponseHelper.Error(statusCode, error.Name, error.Message);
+                return HandleException(ex);
             }
         }
+
 
         [HttpPost("cancel")]
         [SwaggerOperation(Summary = "Cancel a pre-order", Description = "Cancels a pre-order and returns the blocked amount to the available balance")]
@@ -249,71 +139,27 @@ namespace Challenge.API.Controllers
             try
             {
                 if (orderId == Guid.Empty)
-                {
-                    return ResponseHelper.Error(
-                        400,
-                        "ValidationError",
-                        "OrderId is required and must be valid."
-                    );
-                }
+                    return ValidationError("OrderId is required and must be valid.");
 
                 var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId);
-
                 if (preOrder == null)
-                {
-                    return ResponseHelper.Error(
-                        404,
-                        "NotFound",
-                        "PreOrder not found with the specified OrderId."
-                    );
-                }
+                    return NotFoundWithError("PreOrder not found with the specified OrderId.");
 
                 if (preOrder.CompletedAt != null)
-                {
-                    return ResponseHelper.Error(
-                        400,
-                        "AlreadyCompleted",
-                        "This order has already been completed and cannot be cancelled."
-                    );
-                }
+                    return Error(400, "AlreadyCompleted", "This order has already been completed and cannot be cancelled.");
 
                 if (preOrder.CancelledAt != null)
-                {
-                    return ResponseHelper.Error(
-                        400,
-                        "AlreadyCancelled",
-                        "This order has already been cancelled."
-                    );
-                }
+                    return Error(400, "AlreadyCancelled", "This order has already been cancelled.");
 
                 var balance = _balanceOperations.GetBalances().FirstOrDefault();
-
                 if (balance == null)
-                {
-                    var error = new ErrorDTO
-                    {
-                        Name = "NotFound",
-                        Message = "Balance not found"
-                    };
-
-                    _errorOperations.AddError(error);
-
-                    return ResponseHelper.Error(404, error.Name, error.Message);
-                }
+                    return NotFoundWithError("Balance not found");
 
                 balance.BlockedBalance -= preOrder.Amount;
                 balance.AvailableBalance += preOrder.Amount;
 
-                var updateResult = _balanceOperations.UpdateBalance(balance);
-
-                if (!updateResult)
-                {
-                    return ResponseHelper.Error(
-                        500,
-                        "UpdateFailed",
-                        "Failed to update balance."
-                    );
-                }
+                if (!_balanceOperations.UpdateBalance(balance))
+                    return Error(500, "UpdateFailed", "Failed to update balance.");
 
                 preOrder.Status = "Cancelled";
                 preOrder.CancelledAt = DateTime.UtcNow;
@@ -330,24 +176,48 @@ namespace Challenge.API.Controllers
             }
             catch (Exception ex)
             {
-                var error = new ErrorDTO
-                {
-                    Name = ex.GetType().Name ?? "UnhandledException",
-                    Message = ex.Message ?? "An unexpected error occurred."
-                };
-
-                _errorOperations.AddError(error);
-
-                int statusCode = ex switch
-                {
-                    ArgumentNullException => 400,
-                    UnauthorizedAccessException => 401,
-                    KeyNotFoundException => 404,
-                    _ => 500
-                };
-
-                return ResponseHelper.Error(statusCode, error.Name, error.Message);
+                return HandleException(ex);
             }
+        }
+
+        private IActionResult ValidationError(string message)
+        {
+            return Error(400, "ValidationError", message);
+        }
+
+        private IActionResult NotFoundWithError(string message)
+        {
+            var error = new ErrorDTO { Name = "NotFound", Message = message };
+            _errorOperations.AddError(error);
+            return ResponseHelper.Error(404, error.Name, error.Message);
+        }
+
+        private IActionResult Error(int statusCode, string name, string message)
+        {
+            var error = new ErrorDTO { Name = name, Message = message };
+            _errorOperations.AddError(error);
+            return ResponseHelper.Error(statusCode, error.Name, error.Message);
+        }
+
+        private IActionResult HandleException(Exception ex)
+        {
+            var error = new ErrorDTO
+            {
+                Name = ex.GetType().Name ?? "UnhandledException",
+                Message = ex.Message ?? "An unexpected error occurred."
+            };
+
+            _errorOperations.AddError(error);
+
+            int statusCode = ex switch
+            {
+                ArgumentNullException => 400,
+                UnauthorizedAccessException => 401,
+                KeyNotFoundException => 404,
+                _ => 500
+            };
+
+            return ResponseHelper.Error(statusCode, error.Name, error.Message);
         }
     }
 }

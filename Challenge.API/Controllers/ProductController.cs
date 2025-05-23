@@ -8,7 +8,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace Challenge.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/products")]
     [ApiController]
     public class ProductController : ControllerBase
     {
@@ -29,17 +29,7 @@ namespace Challenge.API.Controllers
                 var products = _productOperations.GetProducts();
 
                 if (products == null || !products.Any())
-                {
-                    var error = new ErrorDTO
-                    {
-                        Name = "NotFound",
-                        Message = "No products found"
-                    };
-
-                    _errorOperations.AddError(error);
-
-                    return ResponseHelper.Error(404, error.Name, error.Message);
-                }
+                    return NotFoundWithError("No products found");
 
                 var data = products.Select(product => new
                 {
@@ -56,26 +46,35 @@ namespace Challenge.API.Controllers
             }
             catch (Exception ex)
             {
-                var error = new ErrorDTO
-                {
-                    Name = ex.GetType().Name,
-                    Message = ex.Message
-                };
-
-                _errorOperations.AddError(error);
-
-                return ResponseHelper.Error(
-                    statusCode: ex switch
-                    {
-                        ArgumentNullException => 400,
-                        UnauthorizedAccessException => 401,
-                        KeyNotFoundException => 404,
-                        _ => 500
-                    },
-                    name: error.Name ?? "UnhandledException",
-                    message: error.Message ?? "An unexpected error occurred."
-                );
+                return HandleException(ex);
             }
+        }
+        private IActionResult NotFoundWithError(string message)
+        {
+            var error = new ErrorDTO { Name = "NotFound", Message = message };
+            _errorOperations.AddError(error);
+            return ResponseHelper.Error(404, error.Name, error.Message);
+        }
+
+        private IActionResult HandleException(Exception ex)
+        {
+            var error = new ErrorDTO
+            {
+                Name = ex.GetType().Name ?? "UnhandledException",
+                Message = ex.Message ?? "An unexpected error occurred."
+            };
+
+            _errorOperations.AddError(error);
+
+            int statusCode = ex switch
+            {
+                ArgumentNullException => 400,
+                UnauthorizedAccessException => 401,
+                KeyNotFoundException => 404,
+                _ => 500
+            };
+
+            return ResponseHelper.Error(statusCode, error.Name, error.Message);
         }
 
     }
