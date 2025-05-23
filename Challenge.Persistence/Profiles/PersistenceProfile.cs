@@ -11,6 +11,9 @@ namespace Challenge.Persistence.Profiles
 {
     public class PersistenceProfile : Profile
     {
+        /// <summary>
+        /// Configures AutoMapper mappings between entities and their corresponding DTOs.
+        /// </summary>
         public PersistenceProfile()
         {
             CreateMap<Balance, BalanceDTO>().ReverseMap();

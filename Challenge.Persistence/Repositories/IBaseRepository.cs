@@ -16,7 +16,7 @@ namespace Challenge.Persistence.Repositories
         public void Update(T entity);
         public void Delete(T entity);
         public void SaveChanges();
-        public void SaveChangesAsync();
+        public Task SaveChangesAsync();
         public Task DeleteAsync(Expression<Func<T, bool>> filter);
         public void AddRangeAsync(List<T> entities);
     }

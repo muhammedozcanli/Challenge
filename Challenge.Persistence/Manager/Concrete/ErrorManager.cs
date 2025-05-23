@@ -20,6 +20,11 @@ namespace Challenge.Persistence.Manager.Concrete
             _errorRepository = errorRepository;
             _mapper = mapper;
         }
+        /// <summary>
+        /// Adds a new error record to the database using the provided <see cref="ErrorDTO"/>.
+        /// </summary>
+        /// <param name="errorDTO">The data transfer object representing the error details.</param>
+        /// <returns>True if the error is successfully added; otherwise, false.</returns>
         public bool AddError(ErrorDTO errorDTO)
         {
             try
@@ -29,7 +34,11 @@ namespace Challenge.Persistence.Manager.Concrete
                 _errorRepository.SaveChanges();
                 return true;
             }
-            catch (Exception ex) { return false; }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
+
     }
 }

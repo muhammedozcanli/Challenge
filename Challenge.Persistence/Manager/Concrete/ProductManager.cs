@@ -21,11 +21,16 @@ namespace Challenge.Persistence.Manager.Concrete
             _productRepository = productRepository;
             _mapper = mapper;
         }
+        /// <summary>
+        /// Retrieves a list of all available products from the data source.
+        /// </summary>
+        /// <returns>A collection of <see cref="ProductDTO"/> representing the available products.</returns>
         public IEnumerable<ProductDTO> GetProducts()
         {
             var products = _productRepository.GetList();
             var productDTO = _mapper.Map<List<ProductDTO>>(products);
             return productDTO;
         }
+
     }
 }

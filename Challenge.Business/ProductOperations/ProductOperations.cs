@@ -17,9 +17,14 @@ namespace Challenge.Business.ProductOperations
         {
             _productManager = productManager;
         }
+        /// <summary>
+        /// Retrieves a collection of all available products.
+        /// </summary>
+        /// <returns>An <see cref="IEnumerable{ProductDTO}"/> containing the product information.</returns>
         public IEnumerable<ProductDTO> GetProducts()
         {
             return _productManager.GetProducts();
         }
+
     }
 }

@@ -12,6 +12,11 @@ namespace Challenge.API
 {
     public static class ServiceRegistration
     {
+        /// <summary>
+        /// Registers application services, repositories, managers, and operations with the dependency injection container.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
+        /// <returns>The same <see cref="IServiceCollection"/> instance so that additional calls can be chained.</returns>
         public static IServiceCollection GetServiceCollection(this IServiceCollection services)
         {
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

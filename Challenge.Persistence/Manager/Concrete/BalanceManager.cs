@@ -21,13 +21,23 @@ namespace Challenge.Persistence.Manager.Concrete
             _balanceRepository = balanceRepository;
             _mapper = mapper;
         }
+        /// <summary>
+        /// Retrieves a list of all user balances from the database and maps them to BalanceDTOs.
+        /// </summary>
+        /// <returns>A collection of <see cref="BalanceDTO"/> representing user balances.</returns>
         public IEnumerable<BalanceDTO> GetBalances()
         {
             var balances = _balanceRepository.GetList();
             var balanceDTO = _mapper.Map<List<BalanceDTO>>(balances);
             return balanceDTO;
         }
-        public bool UpdateBalance(BalanceDTO balanceDTO) 
+
+        /// <summary>
+        /// Updates the specified balance in the database using the provided <see cref="BalanceDTO"/>.
+        /// </summary>
+        /// <param name="balanceDTO">The balance data transfer object containing updated balance values.</param>
+        /// <returns>True if the update is successful; otherwise, false.</returns>
+        public bool UpdateBalance(BalanceDTO balanceDTO)
         {
             try
             {
@@ -42,8 +52,11 @@ namespace Challenge.Persistence.Manager.Concrete
                 _balanceRepository.SaveChanges();
                 return true;
             }
-            catch (Exception ex) { return false; }
-            
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
+
     }
 }
