@@ -11,5 +11,6 @@ namespace Challenge.Persistence.Manager.Abstract
     {
         IEnumerable<BalanceDTO> GetBalances();
         bool UpdateBalance(BalanceDTO balanceDTO);
+        BalanceDTO GetBalanceByUserId(Guid userId);
     }
 }

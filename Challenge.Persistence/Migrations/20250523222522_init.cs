@@ -79,7 +79,7 @@ namespace Challenge.Persistence.Migrations
             migrationBuilder.InsertData(
                 table: "Balances",
                 columns: new[] { "Id", "AvailableBalance", "BlockedBalance", "Currency", "LastUpdated", "UserId" },
-                values: new object[] { new Guid("00000000-aaaa-bbbb-cccc-111111111111"), 10L, 0L, "USD", new DateTime(2023, 6, 15, 10, 30, 0, 0, DateTimeKind.Utc), new Guid("550e8400-e29b-41d4-a716-446655440000") });
+                values: new object[] { new Guid("00000000-aaaa-bbbb-cccc-111111111111"), 10000000000L, 0L, "USD", new DateTime(2023, 6, 15, 10, 30, 0, 0, DateTimeKind.Utc), new Guid("550e8400-e29b-41d4-a716-446655440000") });
 
             migrationBuilder.InsertData(
                 table: "Products",

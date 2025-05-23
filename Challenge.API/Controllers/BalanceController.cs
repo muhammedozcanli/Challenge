@@ -1,8 +1,8 @@
 ﻿using Challenge.Business.BalanceOperations;
 using Challenge.Business.ErrorOperations;
+using Challenge.Persistence;
 using Challenge.Persistence.DTOs;
 using Challenge.Persistence.Entities;
-using Challenge.Persistence.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
@@ -29,7 +29,7 @@ namespace Challenge.API.Controllers
         {
             try
             {
-                var balance = _balanceOperations.GetBalances().FirstOrDefault();
+                var balance = _balanceOperations.GetBalanceByUserId(new Guid("550e8400-e29b-41d4-a716-446655440000"));
                 if (balance == null)
                     return NotFoundWithError("Balance not found");
 
@@ -97,7 +97,7 @@ namespace Challenge.API.Controllers
         }
 
         [HttpPost("complete")]
-        [SwaggerOperation(Summary = "Create an order", Description = "Completes a pre-order by deducting the blocked amount from the total balance")]
+        [SwaggerOperation(Summary = "Complete an order", Description = "Completes a pre-order by deducting the blocked amount from the total balance")]
         public IActionResult CompleteOrder([FromBody] Guid orderId)
         {
             try

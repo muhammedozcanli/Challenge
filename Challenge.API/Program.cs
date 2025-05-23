@@ -1,5 +1,5 @@
 ﻿using Challenge.API;
-using Challenge.Persistence.Repositories;
+using Challenge.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

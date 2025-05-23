@@ -11,5 +11,6 @@ namespace Challenge.Business.BalanceOperations
     {
         IEnumerable<BalanceDTO> GetBalances();
         bool UpdateBalance(BalanceDTO balanceDTO);
+        BalanceDTO GetBalanceByUserId(Guid userId);
     }
 }

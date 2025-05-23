@@ -33,5 +33,15 @@ namespace Challenge.Business.BalanceOperations
         {
             return _balanceManager.UpdateBalance(balanceDTO);
         }
+        /// <summary>
+        /// Delegates the retrieval of balance information for the specified user to the balance manager.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user whose balance is to be retrieved.</param>
+        /// <returns>A BalanceDTO object containing the user's balance details.</returns>
+        public BalanceDTO GetBalanceByUserId(Guid userId)
+        {
+            return _balanceManager.GetBalanceByUserId(userId);
+        }
+
     }
 }

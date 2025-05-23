@@ -1,7 +1,7 @@
 ﻿using Challenge.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Challenge.Persistence.Repositories
+namespace Challenge.Persistence
 {
     public class ChallengeDBContext : DbContext
     {
@@ -25,7 +25,7 @@ namespace Challenge.Persistence.Repositories
                 {
                     Id = new Guid("00000000-aaaa-bbbb-cccc-111111111111"),
                     UserId = Guid.Parse("550e8400-e29b-41d4-a716-446655440000"),
-                    AvailableBalance = 10,
+                    AvailableBalance = 10000000000,
                     BlockedBalance = 0,
                     Currency = "USD",
                     LastUpdated = DateTime.Parse("2023-06-15T10:30:00Z", null, System.Globalization.DateTimeStyles.AdjustToUniversal)

@@ -58,5 +58,18 @@ namespace Challenge.Persistence.Manager.Concrete
             }
         }
 
+        /// <summary>
+        /// Retrieves the balance information for the specified user by their unique identifier.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user whose balance is to be retrieved.</param>
+        /// <returns>A BalanceDTO object containing the user's balance details.</returns>
+        public BalanceDTO GetBalanceByUserId(Guid userId)
+        {
+            var balance = _balanceRepository.Get(p => p.UserId == userId);
+            var balanceDTO = _mapper.Map<BalanceDTO>(balance);
+            return balanceDTO;
+        }
+
+
     }
 }
