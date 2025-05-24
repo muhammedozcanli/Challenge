@@ -1,6 +1,7 @@
 ﻿using Challenge.Business.BalanceOperations;
 using Challenge.Business.ErrorOperations;
 using Challenge.Business.ProductOperations;
+using Challenge.Common.Constants;
 using Challenge.Common.Utilities.Result.Concrete;
 using Challenge.Persistence.DTOs;
 using Challenge.Persistence.Entities;
@@ -31,7 +32,7 @@ namespace Challenge.API.Controllers
                 var products = _productOperations.GetProducts();
 
                 if (products == null || !products.Any())
-                    return NotFound(new ErrorDataResult<object>("No products found", 404));
+                    return NotFound(new ErrorDataResult<object>(Messages.Product.NotFound, 404));
 
                 var data = products.Select(product => new
                 {
@@ -44,7 +45,7 @@ namespace Challenge.API.Controllers
                     stock = product.Stock
                 });
 
-                return Ok(new SuccessDataResult<object>(data, "Products retrieved successfully"));
+                return Ok(new SuccessDataResult<object>(data, Messages.Product.Retrieved));
             }
             catch (Exception ex)
             {
@@ -57,7 +58,7 @@ namespace Challenge.API.Controllers
             var error = new ErrorDTO
             {
                 Name = ex.GetType().Name ?? "UnhandledException",
-                Message = ex.Message ?? "An unexpected error occurred."
+                Message = ex.Message ?? Messages.Error.UnexpectedError
             };
 
             _errorOperations.AddError(error);
