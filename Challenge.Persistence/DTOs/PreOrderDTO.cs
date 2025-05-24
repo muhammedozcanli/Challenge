@@ -1,15 +1,12 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Challenge.Persistence.DTOs
 {
-    public record PreOrderDTO
+    public class PreOrderDTO
     {
         [Required]
-        public Guid OrderId { get; set; }
-        
-        [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Amount must be greater than zero.")]
-        public int Amount { get; set; }
+        [MinLength(1, ErrorMessage = "At least one product is required.")]
+        public List<PreOrderProductDTO> Products { get; set; }
     }
 }

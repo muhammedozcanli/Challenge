@@ -16,5 +16,7 @@ namespace Challenge.Persistence.Entities
         public DateTime? CancelledAt { get; set; }
         public Guid UserId { get; set; }
         public User User { get; set; }
+
+        public ICollection<PreOrderProduct> PreOrderProducts { get; set; } = new List<PreOrderProduct>();
     }
 }

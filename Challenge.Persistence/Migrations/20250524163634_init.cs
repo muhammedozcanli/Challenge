@@ -102,6 +102,32 @@ namespace Challenge.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "PreOrderProducts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    PreOrderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PreOrderProducts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PreOrderProducts_PreOrders_PreOrderId",
+                        column: x => x.PreOrderId,
+                        principalTable: "PreOrders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PreOrderProducts_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "Products",
                 columns: new[] { "Id", "Category", "Currency", "Description", "Name", "Price", "Stock" },
@@ -139,6 +165,16 @@ namespace Challenge.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_PreOrderProducts_PreOrderId",
+                table: "PreOrderProducts",
+                column: "PreOrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PreOrderProducts_ProductId",
+                table: "PreOrderProducts",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PreOrders_UserId",
                 table: "PreOrders",
                 column: "UserId");
@@ -152,6 +188,9 @@ namespace Challenge.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Errors");
+
+            migrationBuilder.DropTable(
+                name: "PreOrderProducts");
 
             migrationBuilder.DropTable(
                 name: "PreOrders");

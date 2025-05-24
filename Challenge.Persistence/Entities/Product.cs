@@ -15,5 +15,7 @@ namespace Challenge.Persistence.Entities
         public string? Currency { get; set; }
         public string? Category { get; set; }
         public int? Stock { get; set; }
+
+        public ICollection<PreOrderProduct> PreOrderProducts { get; set; } = new List<PreOrderProduct>();
     }
 }

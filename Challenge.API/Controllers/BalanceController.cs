@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Security.Claims;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace Challenge.API.Controllers
 {
@@ -76,39 +78,74 @@ namespace Challenge.API.Controllers
                     return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
 
                 var userId = Guid.Parse(userIdClaim.Value);
+                
+                // Calculate total amount and validate stocks
+                decimal totalAmount = 0;
+                foreach (var product in request.Products)
+                {
+                    var dbProduct = _dbContext.Products.FirstOrDefault(p => p.Id == product.ProductId);
+                    if (dbProduct == null)
+                        return BadRequest(new ErrorDataResult<object>($"Product with ID {product.ProductId} not found", 400));
+                    
+                    if (dbProduct.Stock < product.Amount)
+                        return BadRequest(new ErrorDataResult<object>($"Insufficient stock for product {dbProduct.Name}. Available: {dbProduct.Stock}, Requested: {product.Amount}", 400));
+                    
+                    totalAmount += (decimal)(dbProduct.Price ?? 0) * product.Amount;
+                }
+
                 var balance = _balanceOperations.GetBalanceByUserId(userId);
                 if (balance == null)
                     return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
 
-                if (balance.AvailableBalance < request.Amount)
+                if (balance.AvailableBalance < (double)totalAmount)
                     return BadRequest(new ErrorDataResult<object>(Messages.Balance.InsufficientBalance, 400));
 
-                balance.BlockedBalance += request.Amount;
-                balance.AvailableBalance -= request.Amount;
-                balance.LastUpdated = DateTime.UtcNow;
-
-                if (!_balanceOperations.UpdateBalance(balance))
-                    return StatusCode(500, new ErrorDataResult<object>(Messages.Balance.UpdateFailed, 500));
-
+                // Create PreOrder
                 var preOrder = new PreOrder
                 {
-                    OrderId = request.OrderId,
-                    Amount = request.Amount,
+                    OrderId = Guid.NewGuid(),
+                    Amount = (int)totalAmount,
                     Status = "PreOrder created!",
                     CreatedDate = DateTime.UtcNow,
                     UserId = userId
                 };
 
                 _dbContext.PreOrders.Add(preOrder);
+
+                // Create PreOrderProducts and update stocks
+                foreach (var product in request.Products)
+                {
+                    var dbProduct = _dbContext.Products.First(p => p.Id == product.ProductId);
+                    
+                    var preOrderProduct = new PreOrderProduct
+                    {
+                        PreOrderId = preOrder.Id,
+                        ProductId = product.ProductId,
+                        Quantity = product.Amount
+                    };
+                    
+                    dbProduct.Stock -= product.Amount;
+                    _dbContext.PreOrderProducts.Add(preOrderProduct);
+                }
+
+                // Update balance
+                balance.BlockedBalance += (long)totalAmount;
+                balance.AvailableBalance -= (long)totalAmount;
+                balance.LastUpdated = DateTime.UtcNow;
+
+                if (!_balanceOperations.UpdateBalance(balance))
+                    return StatusCode(500, new ErrorDataResult<object>(Messages.Balance.UpdateFailed, 500));
+
                 _dbContext.SaveChanges();
 
-                var response = new PreOrderDTO
+                var response = new
                 {
                     OrderId = preOrder.OrderId,
-                    Amount = preOrder.Amount
+                    Amount = totalAmount,
+                    Products = request.Products.Select(p => new { p.ProductId, p.Amount })
                 };
 
-                return Ok(new SuccessDataResult<PreOrderDTO>(response, Messages.PreOrder.Created));
+                return Ok(new SuccessDataResult<object>(response, Messages.PreOrder.Created));
             }
             catch (Exception ex)
             {
@@ -130,7 +167,11 @@ namespace Challenge.API.Controllers
                     return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
 
                 var userId = Guid.Parse(userIdClaim.Value);
-                var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId && po.UserId == userId);
+                var preOrder = _dbContext.PreOrders
+                    .Include(po => po.PreOrderProducts)
+                    .ThenInclude(pop => pop.Product)
+                    .FirstOrDefault(po => po.OrderId == orderId && po.UserId == userId);
+                    
                 if (preOrder == null)
                     return NotFound(new ErrorDataResult<object>(Messages.PreOrder.NotFound, 404));
 
@@ -141,7 +182,7 @@ namespace Challenge.API.Controllers
                 if (balance == null)
                     return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
 
-                balance.BlockedBalance -= preOrder.Amount;
+                balance.BlockedBalance -= (long)preOrder.Amount;
                 balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
@@ -153,13 +194,21 @@ namespace Challenge.API.Controllers
                 _dbContext.PreOrders.Update(preOrder);
                 _dbContext.SaveChanges();
 
-                var response = new PreOrderDTO
+                var response = new
                 {
                     OrderId = preOrder.OrderId,
-                    Amount = preOrder.Amount
+                    Amount = preOrder.Amount,
+                    Products = preOrder.PreOrderProducts.Select(p => new 
+                    { 
+                        ProductId = p.ProductId,
+                        ProductName = p.Product.Name,
+                        Quantity = p.Quantity,
+                        Price = p.Product.Price,
+                        Currency = p.Product.Currency
+                    })
                 };
 
-                return Ok(new SuccessDataResult<PreOrderDTO>(response, Messages.PreOrder.Completed));
+                return Ok(new SuccessDataResult<object>(response, Messages.PreOrder.Completed));
             }
             catch (Exception ex)
             {
@@ -181,7 +230,11 @@ namespace Challenge.API.Controllers
                     return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
 
                 var userId = Guid.Parse(userIdClaim.Value);
-                var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId && po.UserId == userId);
+                var preOrder = _dbContext.PreOrders
+                    .Include(po => po.PreOrderProducts)
+                    .ThenInclude(pop => pop.Product)
+                    .FirstOrDefault(po => po.OrderId == orderId && po.UserId == userId);
+                    
                 if (preOrder == null)
                     return NotFound(new ErrorDataResult<object>(Messages.PreOrder.NotFound, 404));
 
@@ -195,8 +248,14 @@ namespace Challenge.API.Controllers
                 if (balance == null)
                     return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
 
-                balance.BlockedBalance -= preOrder.Amount;
-                balance.AvailableBalance += preOrder.Amount;
+                // Restore product stocks
+                foreach (var preOrderProduct in preOrder.PreOrderProducts)
+                {
+                    preOrderProduct.Product.Stock += preOrderProduct.Quantity;
+                }
+
+                balance.BlockedBalance -= (long)preOrder.Amount;
+                balance.AvailableBalance += (long)preOrder.Amount;
                 balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
@@ -208,13 +267,21 @@ namespace Challenge.API.Controllers
                 _dbContext.PreOrders.Update(preOrder);
                 _dbContext.SaveChanges();
 
-                var response = new PreOrderDTO
+                var response = new
                 {
                     OrderId = preOrder.OrderId,
-                    Amount = preOrder.Amount
+                    Amount = preOrder.Amount,
+                    Products = preOrder.PreOrderProducts.Select(p => new 
+                    { 
+                        ProductId = p.ProductId,
+                        ProductName = p.Product.Name,
+                        Quantity = p.Quantity,
+                        Price = p.Product.Price,
+                        Currency = p.Product.Currency
+                    })
                 };
 
-                return Ok(new SuccessDataResult<PreOrderDTO>(response, Messages.PreOrder.Cancelled));
+                return Ok(new SuccessDataResult<object>(response, Messages.PreOrder.Cancelled));
             }
             catch (Exception ex)
             {

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Challenge.Persistence.Migrations
 {
     [DbContext(typeof(ChallengeDBContext))]
-    [Migration("20250524124207_init")]
+    [Migration("20250524163634_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -121,6 +121,30 @@ namespace Challenge.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("PreOrders");
+                });
+
+            modelBuilder.Entity("Challenge.Persistence.Entities.PreOrderProduct", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PreOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PreOrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("PreOrderProducts");
                 });
 
             modelBuilder.Entity("Challenge.Persistence.Entities.Product", b =>
@@ -257,6 +281,35 @@ namespace Challenge.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Challenge.Persistence.Entities.PreOrderProduct", b =>
+                {
+                    b.HasOne("Challenge.Persistence.Entities.PreOrder", "PreOrder")
+                        .WithMany("PreOrderProducts")
+                        .HasForeignKey("PreOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Challenge.Persistence.Entities.Product", "Product")
+                        .WithMany("PreOrderProducts")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PreOrder");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Challenge.Persistence.Entities.PreOrder", b =>
+                {
+                    b.Navigation("PreOrderProducts");
+                });
+
+            modelBuilder.Entity("Challenge.Persistence.Entities.Product", b =>
+                {
+                    b.Navigation("PreOrderProducts");
                 });
 
             modelBuilder.Entity("Challenge.Persistence.Entities.User", b =>
