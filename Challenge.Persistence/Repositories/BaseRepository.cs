@@ -4,15 +4,14 @@ using System.Linq.Expressions;
 
 namespace Challenge.Persistence.Repositories
 {
-
     public class BaseRepository<TEntity> : IBaseRepository<TEntity>
     where TEntity : BaseEntity, new()
     { 
-        private readonly ChallengeDBContext _tcontext;
+        private readonly DbContext _context;
 
-        public BaseRepository(ChallengeDBContext tContext)
+        public BaseRepository(DbContext context)
         {
-            _tcontext = tContext;
+            _context = context;
         }
 
         /// <summary>
@@ -20,11 +19,7 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public void Add(TEntity entity)
         {
-            lock (_tcontext)
-            {
-                var addedEntity = _tcontext.Entry(entity);
-                addedEntity.State = EntityState.Added;
-            }
+            _context.Set<TEntity>().Add(entity);
         }
 
         /// <summary>
@@ -32,11 +27,7 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public void AddRange(List<TEntity> entities)
         {
-            lock (_tcontext)
-            {
-                _tcontext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-                _tcontext.AddRange(entities);
-            }
+            _context.Set<TEntity>().AddRange(entities);
         }
 
         /// <summary>
@@ -44,11 +35,7 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public void Delete(TEntity entity)
         {
-            lock (_tcontext)
-            {
-                var deletedEntity = _tcontext.Entry(entity);
-                deletedEntity.State = EntityState.Deleted;
-            }
+            _context.Set<TEntity>().Remove(entity);
         }
 
         /// <summary>
@@ -56,10 +43,7 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public TEntity? Get(Expression<Func<TEntity, bool>> filter)
         {
-            lock (_tcontext)
-            {
-                return _tcontext.Set<TEntity>().FirstOrDefault(filter);
-            }
+            return _context.Set<TEntity>().FirstOrDefault(filter);
         }
 
         /// <summary>
@@ -67,11 +51,7 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public void Update(TEntity entity)
         {
-            lock (_tcontext)
-            {
-                var updatedEntity = _tcontext.Entry(entity);
-                updatedEntity.State = EntityState.Modified;
-            }
+            _context.Set<TEntity>().Update(entity);
         }
 
         /// <summary>
@@ -79,12 +59,9 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public List<TEntity> GetList(Expression<Func<TEntity, bool>> filter)
         {
-            lock (_tcontext)
-            {
-                return filter == null
-                                    ? _tcontext.Set<TEntity>().ToList()
-                                    : _tcontext.Set<TEntity>().Where(filter).ToList();
-            }
+            return filter == null
+                ? _context.Set<TEntity>().ToList()
+                : _context.Set<TEntity>().Where(filter).ToList();
         }
 
         /// <summary>
@@ -92,21 +69,10 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> filter)
         {
-            using (var semaphore = new SemaphoreSlim(1, 1))
-            {
-                await semaphore.WaitAsync();
-                try
-                {
-                    var query = filter == null
-                                    ? _tcontext.Set<TEntity>()
-                                    : _tcontext.Set<TEntity>().Where(filter);
-                    return await query.ToListAsync();
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            }
+            var query = filter == null
+                ? _context.Set<TEntity>()
+                : _context.Set<TEntity>().Where(filter);
+            return await query.ToListAsync();
         }
 
         /// <summary>
@@ -114,10 +80,7 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public void AddAsync(TEntity entity)
         {
-            lock (_tcontext)
-            {
-                _tcontext.AddAsync(entity);
-            }
+            _context.Set<TEntity>().AddAsync(entity);
         }
 
         /// <summary>
@@ -125,10 +88,7 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public void SaveChanges()
         {
-            lock (_tcontext)
-            {
-                _tcontext.SaveChanges();
-            }
+            _context.SaveChanges();
         }
 
         /// <summary>
@@ -136,13 +96,7 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public async Task SaveChangesAsync()
         {
-            try
-            {
-                await _tcontext.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-            }
+            await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -154,32 +108,22 @@ namespace Challenge.Persistence.Repositories
         public async Task DeleteAsync(Expression<Func<TEntity, bool>> filter)
         {
             var entities = filter == null
-                ? _tcontext.Set<TEntity>().ToList()
-                : _tcontext.Set<TEntity>().Where(filter).ToList();
+                ? _context.Set<TEntity>().ToList()
+                : _context.Set<TEntity>().Where(filter).ToList();
 
             if (entities.Count != 0)
             {
-                _tcontext.RemoveRange(entities);
-                await _tcontext.SaveChangesAsync();
+                _context.RemoveRange(entities);
+                await _context.SaveChangesAsync();
             }
         }
-
 
         /// <summary>
         /// Asynchronously adds a list of entities to the context.
         /// </summary>
         public void AddRangeAsync(List<TEntity> entities)
         {
-            lock (_tcontext)
-            {
-                try
-                {
-                    _tcontext.AddRangeAsync(entities);
-                }
-                catch (Exception ex)
-                {
-                }
-            }
+            _context.Set<TEntity>().AddRangeAsync(entities);
         }
 
         /// <summary>
@@ -187,13 +131,8 @@ namespace Challenge.Persistence.Repositories
         /// </summary>
         public void UpdateRange(List<TEntity> entities)
         {
-            lock (_tcontext)
-            {
-                _tcontext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-                _tcontext.UpdateRange(entities);
-            }
+            _context.Set<TEntity>().UpdateRange(entities);
         }
-
     }
 }
  

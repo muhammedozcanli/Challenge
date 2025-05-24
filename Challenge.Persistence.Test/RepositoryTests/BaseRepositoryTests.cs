@@ -12,19 +12,34 @@ namespace Challenge.Persistence.Test.RepositoryTests
         public string Name { get; set; }
     }
 
+    public class TestDbContext : DbContext
+    {
+        public TestDbContext(DbContextOptions<TestDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<TestEntity> TestEntities { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TestEntity>();
+        }
+    }
+
     public class BaseRepositoryTests : IDisposable
     {
-        protected readonly ChallengeDBContext _context;
+        protected readonly TestDbContext _context;
         protected readonly BaseRepository<TestEntity> _repository;
-        protected readonly DbContextOptions<ChallengeDBContext> _options;
+        protected readonly DbContextOptions<TestDbContext> _options;
 
         public BaseRepositoryTests()
         {
-            _options = new DbContextOptionsBuilder<ChallengeDBContext>()
+            _options = new DbContextOptionsBuilder<TestDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
-            _context = new ChallengeDBContext(_options);
+            _context = new TestDbContext(_options);
             _repository = new BaseRepository<TestEntity>(_context);
         }
 
