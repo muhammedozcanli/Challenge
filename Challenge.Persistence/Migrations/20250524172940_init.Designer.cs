@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Challenge.Persistence.Migrations
 {
     [DbContext(typeof(ChallengeDBContext))]
-    [Migration("20250524163634_init")]
+    [Migration("20250524172940_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -31,11 +31,11 @@ namespace Challenge.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<long?>("AvailableBalance")
-                        .HasColumnType("bigint");
+                    b.Property<double?>("AvailableBalance")
+                        .HasColumnType("double precision");
 
-                    b.Property<long?>("BlockedBalance")
-                        .HasColumnType("bigint");
+                    b.Property<double?>("BlockedBalance")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Currency")
                         .HasColumnType("text");
@@ -57,16 +57,16 @@ namespace Challenge.Persistence.Migrations
                         new
                         {
                             Id = new Guid("00000000-aaaa-bbbb-cccc-111111111111"),
-                            AvailableBalance = 10000000000L,
-                            BlockedBalance = 0L,
+                            AvailableBalance = 10000000000.0,
+                            BlockedBalance = 0.0,
                             Currency = "USD",
                             UserId = new Guid("550e8400-e29b-41d4-a716-446655440000")
                         },
                         new
                         {
                             Id = new Guid("3c0e8f1b-1d48-4e72-88b9-85de4b7fcb10"),
-                            AvailableBalance = 5000000000L,
-                            BlockedBalance = 0L,
+                            AvailableBalance = 5000000000.0,
+                            BlockedBalance = 0.0,
                             Currency = "USD",
                             UserId = new Guid("a7f3e6c5-2d9b-4c6e-9b2f-3ea893fa8c7d")
                         });
@@ -106,9 +106,6 @@ namespace Challenge.Persistence.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Status")
                         .HasColumnType("text");

@@ -80,17 +80,17 @@ namespace Challenge.API.Controllers
                 var userId = Guid.Parse(userIdClaim.Value);
                 
                 // Calculate total amount and validate stocks
-                decimal totalAmount = 0;
+                double totalAmount = 0;
                 foreach (var product in request.Products)
                 {
                     var dbProduct = _dbContext.Products.FirstOrDefault(p => p.Id == product.ProductId);
                     if (dbProduct == null)
                         return BadRequest(new ErrorDataResult<object>($"Product with ID {product.ProductId} not found", 400));
                     
-                    if (dbProduct.Stock < product.Amount)
-                        return BadRequest(new ErrorDataResult<object>($"Insufficient stock for product {dbProduct.Name}. Available: {dbProduct.Stock}, Requested: {product.Amount}", 400));
+                    if (dbProduct.Stock < product.Quantity)
+                        return BadRequest(new ErrorDataResult<object>($"Insufficient stock for product {dbProduct.Name}. Available: {dbProduct.Stock}, Requested: {product.Quantity}", 400));
                     
-                    totalAmount += (decimal)(dbProduct.Price ?? 0) * product.Amount;
+                    totalAmount += (double)(dbProduct.Price ?? 0) * product.Quantity;
                 }
 
                 var balance = _balanceOperations.GetBalanceByUserId(userId);
@@ -103,8 +103,7 @@ namespace Challenge.API.Controllers
                 // Create PreOrder
                 var preOrder = new PreOrder
                 {
-                    OrderId = Guid.NewGuid(),
-                    Amount = (int)totalAmount,
+                    Amount = totalAmount,
                     Status = "PreOrder created!",
                     CreatedDate = DateTime.UtcNow,
                     UserId = userId
@@ -121,16 +120,16 @@ namespace Challenge.API.Controllers
                     {
                         PreOrderId = preOrder.Id,
                         ProductId = product.ProductId,
-                        Quantity = product.Amount
+                        Quantity = product.Quantity
                     };
                     
-                    dbProduct.Stock -= product.Amount;
+                    dbProduct.Stock -= product.Quantity;
                     _dbContext.PreOrderProducts.Add(preOrderProduct);
                 }
 
                 // Update balance
-                balance.BlockedBalance += (long)totalAmount;
-                balance.AvailableBalance -= (long)totalAmount;
+                balance.BlockedBalance += totalAmount;
+                balance.AvailableBalance -= totalAmount;
                 balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
@@ -140,9 +139,8 @@ namespace Challenge.API.Controllers
 
                 var response = new
                 {
-                    OrderId = preOrder.OrderId,
                     Amount = totalAmount,
-                    Products = request.Products.Select(p => new { p.ProductId, p.Amount })
+                    Products = request.Products.Select(p => new { p.ProductId, p.Quantity })
                 };
 
                 return Ok(new SuccessDataResult<object>(response, Messages.PreOrder.Created));
@@ -170,7 +168,7 @@ namespace Challenge.API.Controllers
                 var preOrder = _dbContext.PreOrders
                     .Include(po => po.PreOrderProducts)
                     .ThenInclude(pop => pop.Product)
-                    .FirstOrDefault(po => po.OrderId == orderId && po.UserId == userId);
+                    .FirstOrDefault(po => po.Id == orderId && po.UserId == userId);
                     
                 if (preOrder == null)
                     return NotFound(new ErrorDataResult<object>(Messages.PreOrder.NotFound, 404));
@@ -196,7 +194,7 @@ namespace Challenge.API.Controllers
 
                 var response = new
                 {
-                    OrderId = preOrder.OrderId,
+                    OrderId = preOrder.Id,
                     Amount = preOrder.Amount,
                     Products = preOrder.PreOrderProducts.Select(p => new 
                     { 
@@ -233,7 +231,7 @@ namespace Challenge.API.Controllers
                 var preOrder = _dbContext.PreOrders
                     .Include(po => po.PreOrderProducts)
                     .ThenInclude(pop => pop.Product)
-                    .FirstOrDefault(po => po.OrderId == orderId && po.UserId == userId);
+                    .FirstOrDefault(po => po.Id == orderId && po.UserId == userId);
                     
                 if (preOrder == null)
                     return NotFound(new ErrorDataResult<object>(Messages.PreOrder.NotFound, 404));
@@ -269,7 +267,7 @@ namespace Challenge.API.Controllers
 
                 var response = new
                 {
-                    OrderId = preOrder.OrderId,
+                    OrderId = preOrder.Id,
                     Amount = preOrder.Amount,
                     Products = preOrder.PreOrderProducts.Select(p => new 
                     { 

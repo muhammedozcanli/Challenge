@@ -62,8 +62,8 @@ namespace Challenge.Persistence.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    AvailableBalance = table.Column<long>(type: "bigint", nullable: true),
-                    BlockedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    AvailableBalance = table.Column<double>(type: "double precision", nullable: true),
+                    BlockedBalance = table.Column<double>(type: "double precision", nullable: true),
                     Currency = table.Column<string>(type: "text", nullable: true),
                     LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -83,7 +83,6 @@ namespace Challenge.Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    OrderId = table.Column<Guid>(type: "uuid", nullable: false),
                     Amount = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: true),
                     CompletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -154,8 +153,8 @@ namespace Challenge.Persistence.Migrations
                 columns: new[] { "Id", "AvailableBalance", "BlockedBalance", "Currency", "LastUpdated", "UserId" },
                 values: new object[,]
                 {
-                    { new Guid("00000000-aaaa-bbbb-cccc-111111111111"), 10000000000L, 0L, "USD", null, new Guid("550e8400-e29b-41d4-a716-446655440000") },
-                    { new Guid("3c0e8f1b-1d48-4e72-88b9-85de4b7fcb10"), 5000000000L, 0L, "USD", null, new Guid("a7f3e6c5-2d9b-4c6e-9b2f-3ea893fa8c7d") }
+                    { new Guid("00000000-aaaa-bbbb-cccc-111111111111"), 10000000000.0, 0.0, "USD", null, new Guid("550e8400-e29b-41d4-a716-446655440000") },
+                    { new Guid("3c0e8f1b-1d48-4e72-88b9-85de4b7fcb10"), 5000000000.0, 0.0, "USD", null, new Guid("a7f3e6c5-2d9b-4c6e-9b2f-3ea893fa8c7d") }
                 });
 
             migrationBuilder.CreateIndex(

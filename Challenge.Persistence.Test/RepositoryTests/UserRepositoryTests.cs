@@ -123,15 +123,15 @@ namespace Challenge.Persistence.Test.RepositoryTests
                 PreOrders = new List<PreOrder>
                 {
                     new PreOrder 
-                    { 
-                        OrderId = orderId1,
+                    {
+                        Id = orderId1,
                         Amount = 500,
                         Status = "Pending",
                         CreatedDate = DateTime.UtcNow
                     },
                     new PreOrder 
-                    { 
-                        OrderId = orderId2,
+                    {
+                        Id = orderId2,
                         Amount = 300,
                         Status = "Pending",
                         CreatedDate = DateTime.UtcNow
@@ -151,8 +151,8 @@ namespace Challenge.Persistence.Test.RepositoryTests
             savedUser.Should().NotBeNull();
             savedUser.PreOrders.Should().NotBeNull();
             savedUser.PreOrders.Should().HaveCount(2);
-            savedUser.PreOrders.Should().Contain(po => po.OrderId == orderId1 && po.Amount == 500);
-            savedUser.PreOrders.Should().Contain(po => po.OrderId == orderId2 && po.Amount == 300);
+            savedUser.PreOrders.Should().Contain(po => po.Id == orderId1 && po.Amount == 500);
+            savedUser.PreOrders.Should().Contain(po => po.Id == orderId2 && po.Amount == 300);
         }
 
         [Fact]
@@ -198,8 +198,8 @@ namespace Challenge.Persistence.Test.RepositoryTests
                 PreOrders = new List<PreOrder>
                 {
                     new PreOrder 
-                    { 
-                        OrderId = orderId,
+                    {
+                        Id = orderId,
                         Amount = 500,
                         Status = "Pending",
                         CreatedDate = DateTime.UtcNow
@@ -296,8 +296,8 @@ namespace Challenge.Persistence.Test.RepositoryTests
                     Password = "pass1",
                     PreOrders = new List<PreOrder> 
                     { 
-                        new PreOrder { OrderId = orderId1, Amount = 500, Status = "Pending" },
-                        new PreOrder { OrderId = orderId2, Amount = 300, Status = "Pending" }
+                        new PreOrder { Id = orderId1, Amount = 500, Status = "Pending" },
+                        new PreOrder { Id = orderId2, Amount = 300, Status = "Pending" }
                     }
                 },
                 new User 
@@ -306,7 +306,7 @@ namespace Challenge.Persistence.Test.RepositoryTests
                     Password = "pass2",
                     PreOrders = new List<PreOrder> 
                     { 
-                        new PreOrder { OrderId = orderId3, Amount = 200, Status = "Pending" }
+                        new PreOrder { Id = orderId3, Amount = 200, Status = "Pending" }
                     }
                 }
             };
@@ -325,11 +325,11 @@ namespace Challenge.Persistence.Test.RepositoryTests
             result.Should().Contain(u => u.PreOrders.Count == 1);
             
             var userWithTwoOrders = result.First(u => u.PreOrders.Count == 2);
-            userWithTwoOrders.PreOrders.Should().Contain(po => po.OrderId == orderId1 && po.Amount == 500);
-            userWithTwoOrders.PreOrders.Should().Contain(po => po.OrderId == orderId2 && po.Amount == 300);
+            userWithTwoOrders.PreOrders.Should().Contain(po => po.Id == orderId1 && po.Amount == 500);
+            userWithTwoOrders.PreOrders.Should().Contain(po => po.Id == orderId2 && po.Amount == 300);
             
             var userWithOneOrder = result.First(u => u.PreOrders.Count == 1);
-            userWithOneOrder.PreOrders.Should().Contain(po => po.OrderId == orderId3 && po.Amount == 200);
+            userWithOneOrder.PreOrders.Should().Contain(po => po.Id == orderId3 && po.Amount == 200);
         }
 
         [Fact]
