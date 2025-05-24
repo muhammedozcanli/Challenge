@@ -1,6 +1,7 @@
 ﻿using Challenge.Business.BalanceOperations;
 using Challenge.Business.ErrorOperations;
 using Challenge.Business.ProductOperations;
+using Challenge.Common.Utilities.Result.Concrete;
 using Challenge.Persistence.DTOs;
 using Challenge.Persistence.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -12,8 +13,9 @@ namespace Challenge.API.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        IProductOperations _productOperations;
-        IErrorOperations _errorOperations;
+        private readonly IProductOperations _productOperations;
+        private readonly IErrorOperations _errorOperations;
+
         public ProductController(IProductOperations productOperations, IErrorOperations errorOperations)
         {
             _productOperations = productOperations;
@@ -29,7 +31,7 @@ namespace Challenge.API.Controllers
                 var products = _productOperations.GetProducts();
 
                 if (products == null || !products.Any())
-                    return NotFoundWithError("No products found");
+                    return NotFound(new ErrorDataResult<object>("No products found", 404));
 
                 var data = products.Select(product => new
                 {
@@ -42,18 +44,12 @@ namespace Challenge.API.Controllers
                     stock = product.Stock
                 });
 
-                return ResponseHelper.Success(data);
+                return Ok(new SuccessDataResult<object>(data, "Products retrieved successfully"));
             }
             catch (Exception ex)
             {
                 return HandleException(ex);
             }
-        }
-        private IActionResult NotFoundWithError(string message)
-        {
-            var error = new ErrorDTO { Name = "NotFound", Message = message };
-            _errorOperations.AddError(error);
-            return ResponseHelper.Error(404, error.Name, error.Message);
         }
 
         private IActionResult HandleException(Exception ex)
@@ -74,8 +70,7 @@ namespace Challenge.API.Controllers
                 _ => 500
             };
 
-            return ResponseHelper.Error(statusCode, error.Name, error.Message);
+            return StatusCode(statusCode, new ErrorDataResult<object>(error.Message, statusCode));
         }
-
     }
 }

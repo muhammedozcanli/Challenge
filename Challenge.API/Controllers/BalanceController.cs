@@ -1,5 +1,6 @@
 ﻿using Challenge.Business.BalanceOperations;
 using Challenge.Business.ErrorOperations;
+using Challenge.Common.Utilities.Result.Concrete;
 using Challenge.Persistence;
 using Challenge.Persistence.DTOs;
 using Challenge.Persistence.Entities;
@@ -13,9 +14,10 @@ namespace Challenge.API.Controllers
     [ApiController]
     public class BalanceController : ControllerBase
     {
-        IBalanceOperations _balanceOperations;
-        IErrorOperations _errorOperations;
+        private readonly IBalanceOperations _balanceOperations;
+        private readonly IErrorOperations _errorOperations;
         private readonly ChallengeDBContext _dbContext;
+
         public BalanceController(IBalanceOperations balanceOperations, IErrorOperations errorOperations, ChallengeDBContext dBContext)
         {
             _dbContext = dBContext;
@@ -31,7 +33,7 @@ namespace Challenge.API.Controllers
             {
                 var balance = _balanceOperations.GetBalanceByUserId(new Guid("550e8400-e29b-41d4-a716-446655440000"));
                 if (balance == null)
-                    return NotFoundWithError("Balance not found");
+                    return NotFound(new ErrorDataResult<object>("Balance not found", 404));
 
                 var data = new
                 {
@@ -43,7 +45,7 @@ namespace Challenge.API.Controllers
                     balance.LastUpdated
                 };
 
-                return ResponseHelper.Success(data);
+                return Ok(new SuccessDataResult<object>(data, "Balance retrieved successfully"));
             }
             catch (Exception ex)
             {
@@ -58,20 +60,20 @@ namespace Challenge.API.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                    return ValidationError("Required fields are missing or invalid.");
+                    return BadRequest(new ErrorDataResult<object>("Required fields are missing or invalid.", 400));
 
                 var balance = _balanceOperations.GetBalances().FirstOrDefault();
                 if (balance == null)
-                    return NotFoundWithError("Balance not found");
+                    return NotFound(new ErrorDataResult<object>("Balance not found", 404));
 
                 if (balance.AvailableBalance < request.Amount)
-                    return Error(400, "InsufficientBalance", "Insufficient available balance for pre-order.");
+                    return BadRequest(new ErrorDataResult<object>("Insufficient available balance for pre-order.", 400));
 
                 balance.BlockedBalance += request.Amount;
                 balance.AvailableBalance -= request.Amount;
 
                 if (!_balanceOperations.UpdateBalance(balance))
-                    return Error(500, "UpdateFailed", "Failed to update balance.");
+                    return StatusCode(500, new ErrorDataResult<object>("Failed to update balance.", 500));
 
                 var preOrder = new PreOrder
                 {
@@ -84,11 +86,13 @@ namespace Challenge.API.Controllers
                 _dbContext.PreOrders.Add(preOrder);
                 _dbContext.SaveChanges();
 
-                return ResponseHelper.Success(new
+                var responseData = new
                 {
                     orderId = request.OrderId,
                     blockedAmount = request.Amount
-                });
+                };
+
+                return Ok(new SuccessDataResult<object>(responseData, "Pre-order created successfully"));
             }
             catch (Exception ex)
             {
@@ -103,14 +107,14 @@ namespace Challenge.API.Controllers
             try
             {
                 if (orderId == Guid.Empty)
-                    return ValidationError("OrderId is required and must be valid.");
+                    return BadRequest(new ErrorDataResult<object>("OrderId is required and must be valid.", 400));
 
                 var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId);
                 if (preOrder == null)
-                    return NotFoundWithError("PreOrder not found with the specified OrderId.");
+                    return NotFound(new ErrorDataResult<object>("PreOrder not found with the specified OrderId.", 404));
 
                 if (preOrder.CompletedAt != null)
-                    return Error(400, "AlreadyCompleted", "This order has already been completed.");
+                    return BadRequest(new ErrorDataResult<object>("This order has already been completed.", 400));
 
                 preOrder.Status = "Completed";
                 preOrder.CompletedAt = DateTime.UtcNow;
@@ -118,19 +122,20 @@ namespace Challenge.API.Controllers
                 _dbContext.PreOrders.Update(preOrder);
                 _dbContext.SaveChanges();
 
-                return ResponseHelper.Success(new
+                var responseData = new
                 {
                     orderId = preOrder.OrderId,
                     status = preOrder.Status,
                     completedAt = preOrder.CompletedAt
-                });
+                };
+
+                return Ok(new SuccessDataResult<object>(responseData, "Order completed successfully"));
             }
             catch (Exception ex)
             {
                 return HandleException(ex);
             }
         }
-
 
         [HttpPost("cancel")]
         [SwaggerOperation(Summary = "Cancel a pre-order", Description = "Cancels a pre-order and returns the blocked amount to the available balance")]
@@ -139,27 +144,27 @@ namespace Challenge.API.Controllers
             try
             {
                 if (orderId == Guid.Empty)
-                    return ValidationError("OrderId is required and must be valid.");
+                    return BadRequest(new ErrorDataResult<object>("OrderId is required and must be valid.", 400));
 
                 var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId);
                 if (preOrder == null)
-                    return NotFoundWithError("PreOrder not found with the specified OrderId.");
+                    return NotFound(new ErrorDataResult<object>("PreOrder not found with the specified OrderId.", 404));
 
                 if (preOrder.CompletedAt != null)
-                    return Error(400, "AlreadyCompleted", "This order has already been completed and cannot be cancelled.");
+                    return BadRequest(new ErrorDataResult<object>("This order has already been completed and cannot be cancelled.", 400));
 
                 if (preOrder.CancelledAt != null)
-                    return Error(400, "AlreadyCancelled", "This order has already been cancelled.");
+                    return BadRequest(new ErrorDataResult<object>("This order has already been cancelled.", 400));
 
                 var balance = _balanceOperations.GetBalances().FirstOrDefault();
                 if (balance == null)
-                    return NotFoundWithError("Balance not found");
+                    return NotFound(new ErrorDataResult<object>("Balance not found", 404));
 
                 balance.BlockedBalance -= preOrder.Amount;
                 balance.AvailableBalance += preOrder.Amount;
 
                 if (!_balanceOperations.UpdateBalance(balance))
-                    return Error(500, "UpdateFailed", "Failed to update balance.");
+                    return StatusCode(500, new ErrorDataResult<object>("Failed to update balance.", 500));
 
                 preOrder.Status = "Cancelled";
                 preOrder.CancelledAt = DateTime.UtcNow;
@@ -167,36 +172,19 @@ namespace Challenge.API.Controllers
                 _dbContext.PreOrders.Update(preOrder);
                 _dbContext.SaveChanges();
 
-                return ResponseHelper.Success(new
+                var responseData = new
                 {
                     orderId = preOrder.OrderId,
                     status = preOrder.Status,
                     cancelledAt = preOrder.CancelledAt
-                });
+                };
+
+                return Ok(new SuccessDataResult<object>(responseData, "Order cancelled successfully"));
             }
             catch (Exception ex)
             {
                 return HandleException(ex);
             }
-        }
-
-        private IActionResult ValidationError(string message)
-        {
-            return Error(400, "ValidationError", message);
-        }
-
-        private IActionResult NotFoundWithError(string message)
-        {
-            var error = new ErrorDTO { Name = "NotFound", Message = message };
-            _errorOperations.AddError(error);
-            return ResponseHelper.Error(404, error.Name, error.Message);
-        }
-
-        private IActionResult Error(int statusCode, string name, string message)
-        {
-            var error = new ErrorDTO { Name = name, Message = message };
-            _errorOperations.AddError(error);
-            return ResponseHelper.Error(statusCode, error.Name, error.Message);
         }
 
         private IActionResult HandleException(Exception ex)
@@ -217,7 +205,7 @@ namespace Challenge.API.Controllers
                 _ => 500
             };
 
-            return ResponseHelper.Error(statusCode, error.Name, error.Message);
+            return StatusCode(statusCode, new ErrorDataResult<object>(error.Message, statusCode));
         }
     }
 }
