@@ -6,6 +6,8 @@ using Challenge.Persistence.Repositories.Abstract;
 using Moq;
 using Xunit;
 using FluentAssertions;
+using System;
+using System.Linq.Expressions;
 
 namespace Challenge.Persistence.Test.ManagerTests
 {
@@ -30,7 +32,7 @@ namespace Challenge.Persistence.Test.ManagerTests
             var user = new User { Id = userId, FirstName = "Test User" };
             var userDto = new UserDTO { Id = userId, FirstName = "Test User" };
 
-            _mockUserRepository.Setup(repo => repo.Get(It.IsAny<Func<User, bool>>()))
+            _mockUserRepository.Setup(repo => repo.Get(It.IsAny<Expression<Func<User, bool>>>()))
                 .Returns(user);
             _mockMapper.Setup(mapper => mapper.Map<UserDTO>(user))
                 .Returns(userDto);
@@ -41,7 +43,7 @@ namespace Challenge.Persistence.Test.ManagerTests
             // Assert
             Assert.NotNull(result);
             result.Should().BeEquivalentTo(userDto);
-            _mockUserRepository.Verify(repo => repo.Get(It.IsAny<Func<User, bool>>()), Times.Once);
+            _mockUserRepository.Verify(repo => repo.Get(It.IsAny<Expression<Func<User, bool>>>()), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<UserDTO>(user), Times.Once);
         }
 
@@ -50,7 +52,7 @@ namespace Challenge.Persistence.Test.ManagerTests
         {
             // Arrange
             var userId = Guid.NewGuid();
-            _mockUserRepository.Setup(repo => repo.Get(It.IsAny<Func<User, bool>>()))
+            _mockUserRepository.Setup(repo => repo.Get(It.IsAny<Expression<Func<User, bool>>>()))
                 .Returns((User)null);
 
             // Act
@@ -58,7 +60,7 @@ namespace Challenge.Persistence.Test.ManagerTests
 
             // Assert
             Assert.Null(result);
-            _mockUserRepository.Verify(repo => repo.Get(It.IsAny<Func<User, bool>>()), Times.Once);
+            _mockUserRepository.Verify(repo => repo.Get(It.IsAny<Expression<Func<User, bool>>>()), Times.Once);
         }
     }
 } 

@@ -6,6 +6,9 @@ using Challenge.Persistence.Repositories.Abstract;
 using Moq;
 using Xunit;
 using FluentAssertions;
+using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace Challenge.Persistence.Test.ManagerTests
 {
@@ -38,7 +41,7 @@ namespace Challenge.Persistence.Test.ManagerTests
                 new BalanceDTO { Id = balances[1].Id, UserId = balances[1].UserId, AvailableBalance = 2000, BlockedBalance = 0, Currency = "USD" }
             };
 
-            _mockBalanceRepository.Setup(repo => repo.GetList(null)).Returns(balances);
+            _mockBalanceRepository.Setup(repo => repo.GetList(It.IsAny<Expression<Func<Balance, bool>>>())).Returns(balances);
             _mockMapper.Setup(mapper => mapper.Map<List<BalanceDTO>>(balances)).Returns(balanceDtos);
 
             // Act
@@ -47,7 +50,7 @@ namespace Challenge.Persistence.Test.ManagerTests
             // Assert
             Assert.NotNull(result);
             result.Should().BeEquivalentTo(balanceDtos);
-            _mockBalanceRepository.Verify(repo => repo.GetList(null), Times.Once);
+            _mockBalanceRepository.Verify(repo => repo.GetList(It.IsAny<Expression<Func<Balance, bool>>>()), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<List<BalanceDTO>>(balances), Times.Once);
         }
 
@@ -68,13 +71,13 @@ namespace Challenge.Persistence.Test.ManagerTests
             var existingBalance = new Balance
             {
                 Id = balanceId,
-                UserId = balanceDto.UserId,
+                UserId = balanceDto.UserId.GetValueOrDefault(),
                 AvailableBalance = 500,
                 BlockedBalance = 0,
                 Currency = "USD"
             };
 
-            _mockBalanceRepository.Setup(repo => repo.Get(It.IsAny<Func<Balance, bool>>()))
+            _mockBalanceRepository.Setup(repo => repo.Get(It.IsAny<Expression<Func<Balance, bool>>>()))
                 .Returns(existingBalance);
 
             // Act
@@ -82,7 +85,7 @@ namespace Challenge.Persistence.Test.ManagerTests
 
             // Assert
             Assert.True(result);
-            _mockBalanceRepository.Verify(repo => repo.Get(It.IsAny<Func<Balance, bool>>()), Times.Once);
+            _mockBalanceRepository.Verify(repo => repo.Get(It.IsAny<Expression<Func<Balance, bool>>>()), Times.Once);
             _mockBalanceRepository.Verify(repo => repo.Update(existingBalance), Times.Once);
             _mockBalanceRepository.Verify(repo => repo.SaveChanges(), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map(balanceDto, existingBalance), Times.Once);
@@ -101,7 +104,7 @@ namespace Challenge.Persistence.Test.ManagerTests
                 Currency = "USD"
             };
 
-            _mockBalanceRepository.Setup(repo => repo.Get(It.IsAny<Func<Balance, bool>>()))
+            _mockBalanceRepository.Setup(repo => repo.Get(It.IsAny<Expression<Func<Balance, bool>>>()))
                 .Returns((Balance)null);
 
             // Act
@@ -109,7 +112,7 @@ namespace Challenge.Persistence.Test.ManagerTests
 
             // Assert
             Assert.False(result);
-            _mockBalanceRepository.Verify(repo => repo.Get(It.IsAny<Func<Balance, bool>>()), Times.Once);
+            _mockBalanceRepository.Verify(repo => repo.Get(It.IsAny<Expression<Func<Balance, bool>>>()), Times.Once);
             _mockBalanceRepository.Verify(repo => repo.Update(It.IsAny<Balance>()), Times.Never);
             _mockBalanceRepository.Verify(repo => repo.SaveChanges(), Times.Never);
         }
@@ -137,7 +140,7 @@ namespace Challenge.Persistence.Test.ManagerTests
                 Currency = "USD"
             };
 
-            _mockBalanceRepository.Setup(repo => repo.Get(It.IsAny<Func<Balance, bool>>()))
+            _mockBalanceRepository.Setup(repo => repo.Get(It.IsAny<Expression<Func<Balance, bool>>>()))
                 .Returns(balance);
             _mockMapper.Setup(mapper => mapper.Map<BalanceDTO>(balance))
                 .Returns(balanceDto);
@@ -148,7 +151,7 @@ namespace Challenge.Persistence.Test.ManagerTests
             // Assert
             Assert.NotNull(result);
             result.Should().BeEquivalentTo(balanceDto);
-            _mockBalanceRepository.Verify(repo => repo.Get(It.IsAny<Func<Balance, bool>>()), Times.Once);
+            _mockBalanceRepository.Verify(repo => repo.Get(It.IsAny<Expression<Func<Balance, bool>>>()), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<BalanceDTO>(balance), Times.Once);
         }
 
@@ -157,7 +160,7 @@ namespace Challenge.Persistence.Test.ManagerTests
         {
             // Arrange
             var userId = Guid.NewGuid();
-            _mockBalanceRepository.Setup(repo => repo.Get(It.IsAny<Func<Balance, bool>>()))
+            _mockBalanceRepository.Setup(repo => repo.Get(It.IsAny<Expression<Func<Balance, bool>>>()))
                 .Returns((Balance)null);
 
             // Act
@@ -165,7 +168,7 @@ namespace Challenge.Persistence.Test.ManagerTests
 
             // Assert
             Assert.Null(result);
-            _mockBalanceRepository.Verify(repo => repo.Get(It.IsAny<Func<Balance, bool>>()), Times.Once);
+            _mockBalanceRepository.Verify(repo => repo.Get(It.IsAny<Expression<Func<Balance, bool>>>()), Times.Once);
         }
     }
 } 
