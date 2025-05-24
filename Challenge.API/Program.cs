@@ -29,7 +29,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = "challenge-api",
             ValidAudience = "challenge-client",
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes("your-256-bit-secret-key-here-challenge-api-2024"))
+                Encoding.UTF8.GetBytes("x49f$J3qM@r!zW7uQ9sDpL^8Nc#2eTbY"))
         };
         options.Events = new JwtBearerEvents
         {
