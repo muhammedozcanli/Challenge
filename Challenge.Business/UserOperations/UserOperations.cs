@@ -16,9 +16,15 @@ namespace Challenge.Business.UserOperations
         {
             _userManager = userManager;
         }
+        /// <summary>
+        /// Retrieves the user with the specified <paramref name="id"/>.
+        /// </summary>
+        /// <param name="id">The unique identifier (GUID) of the user.</param>
+        /// <returns>A <see cref="UserDTO"/> object containing user information.</returns>
         public UserDTO GetUser(Guid id)
         {
             return _userManager.GetUser(id);
         }
+
     }
 }

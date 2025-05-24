@@ -42,7 +42,7 @@ namespace Challenge.API.Controllers
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
-                    return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
+                    return Unauthorized(new ErrorDataResult<object>(Messages.Authentication.UserIdNotFound, 401));
 
                 var userId = Guid.Parse(userIdClaim.Value);
                 var balance = _balanceOperations.GetBalanceByUserId(userId);
@@ -51,8 +51,6 @@ namespace Challenge.API.Controllers
 
                 var data = new
                 {
-                    balance.UserId,
-                    totalBalance = balance.AvailableBalance + balance.BlockedBalance,
                     availableBalance = balance.AvailableBalance,
                     blockedBalance = balance.BlockedBalance,
                     balance.Currency,
@@ -81,7 +79,7 @@ namespace Challenge.API.Controllers
 
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
-                    return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
+                    return Unauthorized(new ErrorDataResult<object>(Messages.Authentication.UserIdNotFound, 401));
 
                 var userId = Guid.Parse(userIdClaim.Value);
                 
@@ -91,10 +89,10 @@ namespace Challenge.API.Controllers
                 {
                     var dbProduct = _dbContext.Products.FirstOrDefault(p => p.Id == product.ProductId);
                     if (dbProduct == null)
-                        return BadRequest(new ErrorDataResult<object>($"Product with ID {product.ProductId} not found", 400));
+                        return BadRequest(new ErrorDataResult<object>(string.Format(Messages.PreOrder.ProductNotFound, product.ProductId), 400));
                     
                     if (dbProduct.Stock < product.Quantity)
-                        return BadRequest(new ErrorDataResult<object>($"Insufficient stock for product {dbProduct.Name}. Available: {dbProduct.Stock}, Requested: {product.Quantity}", 400));
+                        return BadRequest(new ErrorDataResult<object>(string.Format(Messages.PreOrder.InsufficientStock, dbProduct.Name, dbProduct.Stock, product.Quantity), 400));
                     
                     totalAmount += (double)(dbProduct.Price ?? 0) * product.Quantity;
                 }
@@ -145,8 +143,8 @@ namespace Challenge.API.Controllers
 
                 var response = new
                 {
-                    Amount = totalAmount,
-                    Products = request.Products.Select(p => new { p.ProductId, p.Quantity })
+                    preOrder.Id,
+                    Amount = totalAmount
                 };
 
                 return Ok(new SuccessDataResult<object>(response, Messages.PreOrder.Created));
@@ -168,7 +166,7 @@ namespace Challenge.API.Controllers
 
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
-                    return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
+                    return Unauthorized(new ErrorDataResult<object>(Messages.Authentication.UserIdNotFound, 401));
 
                 var userId = Guid.Parse(userIdClaim.Value);
                 var preOrder = _dbContext.PreOrders
@@ -201,15 +199,7 @@ namespace Challenge.API.Controllers
                 var response = new
                 {
                     OrderId = preOrder.Id,
-                    Amount = preOrder.Amount,
-                    Products = preOrder.PreOrderProducts.Select(p => new 
-                    { 
-                        ProductId = p.ProductId,
-                        ProductName = p.Product.Name,
-                        Quantity = p.Quantity,
-                        Price = p.Product.Price,
-                        Currency = p.Product.Currency
-                    })
+                    CompletedAt = preOrder.CompletedAt?.ToString("yyyy-MM-dd HH:mm:ss")
                 };
 
                 return Ok(new SuccessDataResult<object>(response, Messages.PreOrder.Completed));
@@ -231,7 +221,7 @@ namespace Challenge.API.Controllers
 
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
-                    return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
+                    return Unauthorized(new ErrorDataResult<object>(Messages.Authentication.UserIdNotFound, 401));
 
                 var userId = Guid.Parse(userIdClaim.Value);
                 var preOrder = _dbContext.PreOrders
@@ -274,15 +264,7 @@ namespace Challenge.API.Controllers
                 var response = new
                 {
                     OrderId = preOrder.Id,
-                    Amount = preOrder.Amount,
-                    Products = preOrder.PreOrderProducts.Select(p => new 
-                    { 
-                        ProductId = p.ProductId,
-                        ProductName = p.Product.Name,
-                        Quantity = p.Quantity,
-                        Price = p.Product.Price,
-                        Currency = p.Product.Currency
-                    })
+                    CancelledAt = preOrder.CancelledAt?.ToString("yyyy-MM-dd HH:mm:ss")
                 };
 
                 return Ok(new SuccessDataResult<object>(response, Messages.PreOrder.Cancelled));

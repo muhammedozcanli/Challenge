@@ -15,11 +15,17 @@ namespace Challenge.Persistence.Manager.Concrete
             _userRepository = userRepository;
             _mapper = mapper;
         }
+        /// <summary>
+        /// Retrieves a user by their unique identifier and maps the result to a UserDTO.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user.</param>
+        /// <returns>A UserDTO containing the user's information.</returns>
         public UserDTO GetUser(Guid id)
         {
-           var user = _userRepository.Get(p => p.Id == id);
-           var userDTO = _mapper.Map<UserDTO>(user);
+            var user = _userRepository.Get(p => p.Id == id);
+            var userDTO = _mapper.Map<UserDTO>(user);
             return userDTO;
         }
+
     }
 }
