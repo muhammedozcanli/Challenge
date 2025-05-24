@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
+    c.ExampleFilters(); // Enable example filters
     
     // Add JWT Authentication support in Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -74,6 +76,9 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+// Register examples
+builder.Services.AddSwaggerExamplesFromAssemblyOf<Program>();
 
 builder.Services.AddCors(options =>
 {

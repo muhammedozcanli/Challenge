@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Challenge.Persistence.Migrations
 {
     [DbContext(typeof(ChallengeDBContext))]
-    [Migration("20250524172940_init")]
+    [Migration("20250524212453_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -95,8 +95,8 @@ namespace Challenge.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Amount")
-                        .HasColumnType("integer");
+                    b.Property<double>("Amount")
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime?>("CancelledAt")
                         .HasColumnType("timestamp with time zone");

@@ -6,12 +6,15 @@ using Challenge.Persistence;
 using Challenge.Persistence.DTOs;
 using Challenge.Persistence.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 using System;
 using System.Security.Claims;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Challenge.API.Examples;
 
 namespace Challenge.API.Controllers
 {
@@ -66,6 +69,9 @@ namespace Challenge.API.Controllers
 
         [HttpPost("preorder")]
         [SwaggerOperation(Summary = "Create a pre-order", Description = "Creates a pre-order and blocks the specified amount from the available balance")]
+        [SwaggerRequestExample(typeof(PreOrderDTO), typeof(PreOrderRequestExample))]
+        [SwaggerResponseExample(StatusCodes.Status200OK, typeof(PreOrderResponseExample))]
+        [ProducesResponseType(typeof(PreOrderResponseDTO), StatusCodes.Status200OK)]
         public IActionResult CreatePreOrder([FromBody] PreOrderDTO request)
         {
             try
@@ -180,7 +186,7 @@ namespace Challenge.API.Controllers
                 if (balance == null)
                     return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
 
-                balance.BlockedBalance -= (long)preOrder.Amount;
+                balance.BlockedBalance -= preOrder.Amount;
                 balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
@@ -252,8 +258,8 @@ namespace Challenge.API.Controllers
                     preOrderProduct.Product.Stock += preOrderProduct.Quantity;
                 }
 
-                balance.BlockedBalance -= (long)preOrder.Amount;
-                balance.AvailableBalance += (long)preOrder.Amount;
+                balance.BlockedBalance -= preOrder.Amount;
+                balance.AvailableBalance += preOrder.Amount;
                 balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
