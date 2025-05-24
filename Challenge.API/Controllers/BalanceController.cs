@@ -5,12 +5,15 @@ using Challenge.Common.Utilities.Result.Concrete;
 using Challenge.Persistence;
 using Challenge.Persistence.DTOs;
 using Challenge.Persistence.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
+using System.Security.Claims;
 
 namespace Challenge.API.Controllers
 {
+    [Authorize]
     [Route("api/balance")]
     [ApiController]
     public class BalanceController : ControllerBase
@@ -32,7 +35,12 @@ namespace Challenge.API.Controllers
         {
             try
             {
-                var balance = _balanceOperations.GetBalanceByUserId(new Guid("550e8400-e29b-41d4-a716-446655440000"));
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
+
+                var userId = Guid.Parse(userIdClaim.Value);
+                var balance = _balanceOperations.GetBalanceByUserId(userId);
                 if (balance == null)
                     return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
 
@@ -63,7 +71,12 @@ namespace Challenge.API.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(new ErrorDataResult<object>(Messages.Balance.ValidationError, 400));
 
-                var balance = _balanceOperations.GetBalances().FirstOrDefault();
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
+
+                var userId = Guid.Parse(userIdClaim.Value);
+                var balance = _balanceOperations.GetBalanceByUserId(userId);
                 if (balance == null)
                     return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
 
@@ -72,6 +85,7 @@ namespace Challenge.API.Controllers
 
                 balance.BlockedBalance += request.Amount;
                 balance.AvailableBalance -= request.Amount;
+                balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
                     return StatusCode(500, new ErrorDataResult<object>(Messages.Balance.UpdateFailed, 500));
@@ -81,19 +95,20 @@ namespace Challenge.API.Controllers
                     OrderId = request.OrderId,
                     Amount = request.Amount,
                     Status = "PreOrder created!",
-                    CreatedDate = DateTime.UtcNow
+                    CreatedDate = DateTime.UtcNow,
+                    UserId = userId
                 };
 
                 _dbContext.PreOrders.Add(preOrder);
                 _dbContext.SaveChanges();
 
-                var responseData = new
+                var response = new PreOrderDTO
                 {
-                    orderId = request.OrderId,
-                    blockedAmount = request.Amount
+                    OrderId = preOrder.OrderId,
+                    Amount = preOrder.Amount
                 };
 
-                return Ok(new SuccessDataResult<object>(responseData, Messages.PreOrder.Created));
+                return Ok(new SuccessDataResult<PreOrderDTO>(response, Messages.PreOrder.Created));
             }
             catch (Exception ex)
             {
@@ -110,12 +125,27 @@ namespace Challenge.API.Controllers
                 if (orderId == Guid.Empty)
                     return BadRequest(new ErrorDataResult<object>(Messages.PreOrder.InvalidOrderId, 400));
 
-                var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId);
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
+
+                var userId = Guid.Parse(userIdClaim.Value);
+                var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId && po.UserId == userId);
                 if (preOrder == null)
                     return NotFound(new ErrorDataResult<object>(Messages.PreOrder.NotFound, 404));
 
                 if (preOrder.CompletedAt != null)
                     return BadRequest(new ErrorDataResult<object>(Messages.PreOrder.AlreadyCompleted, 400));
+
+                var balance = _balanceOperations.GetBalanceByUserId(userId);
+                if (balance == null)
+                    return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
+
+                balance.BlockedBalance -= preOrder.Amount;
+                balance.LastUpdated = DateTime.UtcNow;
+
+                if (!_balanceOperations.UpdateBalance(balance))
+                    return StatusCode(500, new ErrorDataResult<object>(Messages.Balance.UpdateFailed, 500));
 
                 preOrder.Status = "Completed";
                 preOrder.CompletedAt = DateTime.UtcNow;
@@ -123,14 +153,13 @@ namespace Challenge.API.Controllers
                 _dbContext.PreOrders.Update(preOrder);
                 _dbContext.SaveChanges();
 
-                var responseData = new
+                var response = new PreOrderDTO
                 {
-                    orderId = preOrder.OrderId,
-                    status = preOrder.Status,
-                    completedAt = preOrder.CompletedAt
+                    OrderId = preOrder.OrderId,
+                    Amount = preOrder.Amount
                 };
 
-                return Ok(new SuccessDataResult<object>(responseData, Messages.PreOrder.Completed));
+                return Ok(new SuccessDataResult<PreOrderDTO>(response, Messages.PreOrder.Completed));
             }
             catch (Exception ex)
             {
@@ -147,7 +176,12 @@ namespace Challenge.API.Controllers
                 if (orderId == Guid.Empty)
                     return BadRequest(new ErrorDataResult<object>(Messages.PreOrder.InvalidOrderId, 400));
 
-                var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId);
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized(new ErrorDataResult<object>("User ID not found in token", 401));
+
+                var userId = Guid.Parse(userIdClaim.Value);
+                var preOrder = _dbContext.PreOrders.FirstOrDefault(po => po.OrderId == orderId && po.UserId == userId);
                 if (preOrder == null)
                     return NotFound(new ErrorDataResult<object>(Messages.PreOrder.NotFound, 404));
 
@@ -157,12 +191,13 @@ namespace Challenge.API.Controllers
                 if (preOrder.CancelledAt != null)
                     return BadRequest(new ErrorDataResult<object>(Messages.PreOrder.AlreadyCancelled, 400));
 
-                var balance = _balanceOperations.GetBalances().FirstOrDefault();
+                var balance = _balanceOperations.GetBalanceByUserId(userId);
                 if (balance == null)
                     return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
 
                 balance.BlockedBalance -= preOrder.Amount;
                 balance.AvailableBalance += preOrder.Amount;
+                balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
                     return StatusCode(500, new ErrorDataResult<object>(Messages.Balance.UpdateFailed, 500));
@@ -173,14 +208,13 @@ namespace Challenge.API.Controllers
                 _dbContext.PreOrders.Update(preOrder);
                 _dbContext.SaveChanges();
 
-                var responseData = new
+                var response = new PreOrderDTO
                 {
-                    orderId = preOrder.OrderId,
-                    status = preOrder.Status,
-                    cancelledAt = preOrder.CancelledAt
+                    OrderId = preOrder.OrderId,
+                    Amount = preOrder.Amount
                 };
 
-                return Ok(new SuccessDataResult<object>(responseData, Messages.PreOrder.Cancelled));
+                return Ok(new SuccessDataResult<PreOrderDTO>(response, Messages.PreOrder.Cancelled));
             }
             catch (Exception ex)
             {

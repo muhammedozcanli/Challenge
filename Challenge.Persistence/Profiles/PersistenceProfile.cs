@@ -20,6 +20,7 @@ namespace Challenge.Persistence.Profiles
             CreateMap<Error, ErrorDTO>().ReverseMap(); ;
             CreateMap<PreOrder, PreOrderDTO>().ReverseMap();
             CreateMap<Product, ProductDTO>().ReverseMap();
+            CreateMap<User, UserDTO>().ReverseMap();
         }
     }
 }

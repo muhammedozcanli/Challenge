@@ -2,6 +2,7 @@
 using Challenge.Business.ErrorOperations;
 using Challenge.Business.PreOrderOperations;
 using Challenge.Business.ProductOperations;
+using Challenge.Business.UserOperations;
 using Challenge.Persistence.Manager.Abstract;
 using Challenge.Persistence.Manager.Concrete;
 using Challenge.Persistence.Repositories;
@@ -25,16 +26,19 @@ namespace Challenge.API
             services.AddScoped<IErrorRepository, ErrorRepository>();
             services.AddScoped<IPreOrderRepository, PreOrderRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
 
             services.AddScoped<IBalanceManager, BalanceManager>();
             services.AddScoped<IErrorManager, ErrorManager>();
             services.AddScoped<IPreOrderManager, PreOrderManager>();
             services.AddScoped<IProductManager, ProductManager>();
+            services.AddScoped<IUserManager, UserManager>();
 
             services.AddScoped<IBalanceOperations, BalanceOperations>();
             services.AddScoped<IErrorOperations, ErrorOperations>();
             services.AddScoped<IPreOrderOperations, PreOrderOperations>();
             services.AddScoped<IProductOperations, ProductOperations>();
+            services.AddScoped<IUserOperations, UserOperations>();
 
             return services;
         }

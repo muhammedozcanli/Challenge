@@ -14,5 +14,7 @@ namespace Challenge.Persistence.Entities
         public string? Status { get; set; }
         public DateTime? CompletedAt { get; set; }
         public DateTime? CancelledAt { get; set; }
+        public Guid UserId { get; set; }
+        public User User { get; set; }
     }
 }

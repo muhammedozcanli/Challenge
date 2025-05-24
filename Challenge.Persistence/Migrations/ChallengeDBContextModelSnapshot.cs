@@ -40,10 +40,13 @@ namespace Challenge.Persistence.Migrations
                     b.Property<DateTime?>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Balances");
 
@@ -54,8 +57,15 @@ namespace Challenge.Persistence.Migrations
                             AvailableBalance = 10000000000L,
                             BlockedBalance = 0L,
                             Currency = "USD",
-                            LastUpdated = new DateTime(2023, 6, 15, 10, 30, 0, 0, DateTimeKind.Utc),
                             UserId = new Guid("550e8400-e29b-41d4-a716-446655440000")
+                        },
+                        new
+                        {
+                            Id = new Guid("3c0e8f1b-1d48-4e72-88b9-85de4b7fcb10"),
+                            AvailableBalance = 5000000000L,
+                            BlockedBalance = 0L,
+                            Currency = "USD",
+                            UserId = new Guid("a7f3e6c5-2d9b-4c6e-9b2f-3ea893fa8c7d")
                         });
                 });
 
@@ -100,7 +110,12 @@ namespace Challenge.Persistence.Migrations
                     b.Property<string>("Status")
                         .HasColumnType("text");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("PreOrders");
                 });
@@ -184,6 +199,69 @@ namespace Challenge.Persistence.Migrations
                             Price = 9.9900000000000002,
                             Stock = 120
                         });
+                });
+
+            modelBuilder.Entity("Challenge.Persistence.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("550e8400-e29b-41d4-a716-446655440000"),
+                            FirstName = "Test",
+                            Password = "a4ayc/80/OGda4BO/1o/V0etpOqiLx1JwB5S3beHW0s="
+                        },
+                        new
+                        {
+                            Id = new Guid("a7f3e6c5-2d9b-4c6e-9b2f-3ea893fa8c7d"),
+                            FirstName = "User",
+                            Password = "a4ayc/80/OGda4BO/1o/V0etpOqiLx1JwB5S3beHW0s="
+                        });
+                });
+
+            modelBuilder.Entity("Challenge.Persistence.Entities.Balance", b =>
+                {
+                    b.HasOne("Challenge.Persistence.Entities.User", "User")
+                        .WithOne("Balance")
+                        .HasForeignKey("Challenge.Persistence.Entities.Balance", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Challenge.Persistence.Entities.PreOrder", b =>
+                {
+                    b.HasOne("Challenge.Persistence.Entities.User", "User")
+                        .WithMany("PreOrders")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Challenge.Persistence.Entities.User", b =>
+                {
+                    b.Navigation("Balance")
+                        .IsRequired();
+
+                    b.Navigation("PreOrders");
                 });
 #pragma warning restore 612, 618
         }

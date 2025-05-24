@@ -1,5 +1,6 @@
 ﻿using Challenge.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
+using Challenge.Common.Security;
 
 namespace Challenge.Persistence
 {
@@ -15,6 +16,7 @@ namespace Challenge.Persistence
         public virtual DbSet<Error> Errors { get; set; }
         public virtual DbSet<PreOrder> PreOrders { get; set; }
         public virtual DbSet<Product> Products { get; set; }
+        public virtual DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,17 +26,23 @@ namespace Challenge.Persistence
                 new Balance
                 {
                     Id = new Guid("00000000-aaaa-bbbb-cccc-111111111111"),
-                    UserId = Guid.Parse("550e8400-e29b-41d4-a716-446655440000"),
+                    UserId = new Guid("550e8400-e29b-41d4-a716-446655440000"),
                     AvailableBalance = 10000000000,
                     BlockedBalance = 0,
-                    Currency = "USD",
-                    LastUpdated = DateTime.Parse("2023-06-15T10:30:00Z", null, System.Globalization.DateTimeStyles.AdjustToUniversal)
+                    Currency = "USD"
+                },
+                new Balance
+                {
+                    Id = new Guid("3c0e8f1b-1d48-4e72-88b9-85de4b7fcb10"),
+                    UserId = new Guid("a7f3e6c5-2d9b-4c6e-9b2f-3ea893fa8c7d"),
+                    AvailableBalance = 5000000000,
+                    BlockedBalance = 0,
+                    Currency = "USD"
                 },
             };
             #endregion
 
             #region Product
-
             List<Product> productSeed = new List<Product>
             {
                 new Product
@@ -88,13 +96,32 @@ namespace Challenge.Persistence
                     Stock = 120
                 }
             };
+            #endregion
 
+            #region User
+            string hashedPassword = HashingHelper.HashPassword("1");
+
+            List<User> userSeed = new List<User>
+            {
+                new User
+                {
+                    Id = new Guid("550e8400-e29b-41d4-a716-446655440000"),
+                    FirstName = "Test",
+                    Password = hashedPassword
+                },
+                new User
+                {
+                    Id = new Guid("a7f3e6c5-2d9b-4c6e-9b2f-3ea893fa8c7d"),
+                    FirstName = "User",
+                    Password = hashedPassword
+                }
+
+            };
             #endregion
 
             modelBuilder.Entity<Balance>().HasData(balanceSeed);
             modelBuilder.Entity<Product>().HasData(productSeed);
-
-            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<User>().HasData(userSeed);
         }
     }
 }
