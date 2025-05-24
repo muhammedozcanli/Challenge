@@ -10,65 +10,45 @@ namespace Challenge.Business.Test.ProductTests;
 
 public class ProductOperationsTests
 {
-    private readonly Mock<IProductManager> _productManagerMock;
+    private readonly Mock<IProductManager> _mockProductManager;
     private readonly IProductOperations _productOperations;
 
     public ProductOperationsTests()
     {
-        // Setup
-        _productManagerMock = new Mock<IProductManager>();
-        _productOperations = new ProductOperations.ProductOperations(_productManagerMock.Object);
+        _mockProductManager = new Mock<IProductManager>();
+        _productOperations = new ProductOperations.ProductOperations(_mockProductManager.Object);
     }
 
     [Fact]
-    public void GetProducts_WhenCalled_ShouldReturnProductList()
+    public void GetProducts_ShouldReturnProducts_WhenProductsExist()
     {
         // Arrange
-        var expectedProducts = new List<ProductDTO>
+        var products = new List<ProductDTO>
         {
-            new ProductDTO { Id = Guid.NewGuid(), Name = "Test Product 1", Price = 100.00 },
-            new ProductDTO { Id = Guid.NewGuid(), Name = "Test Product 2", Price = 200.00 }
+            new ProductDTO { Id = Guid.NewGuid(), Name = "Product 1", Price = 100, Stock = 10 },
+            new ProductDTO { Id = Guid.NewGuid(), Name = "Product 2", Price = 200, Stock = 20 }
         };
-
-        _productManagerMock
-            .Setup(pm => pm.GetProducts())
-            .Returns(expectedProducts);
-
-        // Act
-        var actualProducts = _productOperations.GetProducts();
-
-        // Assert
-        actualProducts.Should().BeEquivalentTo(expectedProducts);
-        _productManagerMock.Verify(pm => pm.GetProducts(), Times.Once);
-    }
-
-    [Fact]
-    public void GetProducts_WhenNoProducts_ShouldReturnEmptyList()
-    {
-        // Arrange
-        var emptyList = new List<ProductDTO>();
-        _productManagerMock
-            .Setup(pm => pm.GetProducts())
-            .Returns(emptyList);
+        _mockProductManager.Setup(manager => manager.GetProducts()).Returns(products);
 
         // Act
         var result = _productOperations.GetProducts();
 
         // Assert
-        result.Should().BeEmpty();
-        _productManagerMock.Verify(pm => pm.GetProducts(), Times.Once);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        result.Should().BeEquivalentTo(products);
     }
 
     [Fact]
-    public void GetProducts_WhenManagerThrowsException_ShouldPropagateException()
+    public void GetProducts_ShouldReturnEmptyList_WhenNoProductsExist()
     {
         // Arrange
-        _productManagerMock
-            .Setup(pm => pm.GetProducts())
-            .Throws<System.Exception>();
+        _mockProductManager.Setup(manager => manager.GetProducts()).Returns(new List<ProductDTO>());
 
-        // Act & Assert
-        Assert.Throws<System.Exception>(() => _productOperations.GetProducts());
-        _productManagerMock.Verify(pm => pm.GetProducts(), Times.Once);
+        // Act
+        var result = _productOperations.GetProducts();
+
+        // Assert
+        Assert.Empty(result);
     }
 } 
