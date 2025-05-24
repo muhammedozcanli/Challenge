@@ -1,5 +1,8 @@
 using Challenge.Persistence.DTOs;
+using Challenge.Persistence.ResponseDatas;
 using Swashbuckle.AspNetCore.Filters;
+using System;
+using System.Collections.Generic;
 
 namespace Challenge.API.Examples
 {
@@ -14,7 +17,7 @@ namespace Challenge.API.Examples
                     new PreOrderProductDTO
                     {
                         ProductId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
-                        Quantity = 2147483647
+                        Quantity = 2
                     }
                 }
             };
@@ -29,15 +32,8 @@ namespace Challenge.API.Examples
             {
                 Data = new PreOrderResponseData
                 {
-                    Amount = 19.99,
-                    Products = new List<PreOrderProductResponseDTO>
-                    {
-                        new PreOrderProductResponseDTO
-                        {
-                            ProductId = "a1b2c3d4-e5f6-4111-aaaa-111111111111",
-                            Quantity = 1
-                        }
-                    }
+                    Id = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                    Amount = 19.99
                 },
                 Success = true,
                 Message = "Pre-order created successfully.",
