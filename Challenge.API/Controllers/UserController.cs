@@ -51,7 +51,7 @@ namespace Challenge.API.Controllers
                         Message = Messages.User.NotFound
                     };
                     _errorOperations.AddError(notFoundError);
-                    return NotFound(new ErrorDataResult<ErrorDTO>(notFoundError));
+                    return NotFound(new ErrorDataResult<ErrorDTO>(notFoundError, Messages.User.NotFound, 400));
                 }
 
                 var hashedPassword = HashingHelper.HashPassword(request.Password);
@@ -63,7 +63,7 @@ namespace Challenge.API.Controllers
                         Message = Messages.User.InvalidCredentials
                     };
                     _errorOperations.AddError(authError);
-                    return Unauthorized(new ErrorDataResult<ErrorDTO>(authError));
+                    return Unauthorized(new ErrorDataResult<ErrorDTO>(authError, Messages.User.InvalidCredentials, 401));
                 }
 
                 var token = TokenHelper.GenerateToken(user.Id, user.FirstName);
@@ -101,7 +101,7 @@ namespace Challenge.API.Controllers
                 _ => 500
             };
 
-            return StatusCode(statusCode, new ErrorDataResult<ErrorDTO>(error));
+            return StatusCode(statusCode, new ErrorDataResult<ErrorDTO>(error, error.Message, statusCode));
         }
     }
 }

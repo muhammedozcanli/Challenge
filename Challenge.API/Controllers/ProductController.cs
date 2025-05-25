@@ -39,7 +39,7 @@ namespace Challenge.API.Controllers
                         Message = Messages.Product.NotFound
                     };
                     _errorOperations.AddError(error);
-                    return NotFound(new ErrorDataResult<ErrorDTO>(error));
+                    return NotFound(new ErrorDataResult<ErrorDTO>(error, Messages.Product.NotFound));
                 }
 
                 var data = products.Select(product => new
@@ -79,7 +79,7 @@ namespace Challenge.API.Controllers
                 _ => 500
             };
 
-            return StatusCode(statusCode, new ErrorDataResult<ErrorDTO>(error));
+            return StatusCode(statusCode, new ErrorDataResult<ErrorDTO>(error, error.Message, statusCode));
         }
     }
 }
