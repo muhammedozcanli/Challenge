@@ -32,15 +32,39 @@ namespace Challenge.API.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                    return BadRequest(new ErrorDataResult<object>(Messages.User.ValidationError, 400));
+                {
+                    var validationError = new ErrorDTO
+                    {
+                        Name = "ValidationError",
+                        Message = Messages.User.ValidationError
+                    };
+                    _errorOperations.AddError(validationError);
+                    return BadRequest(new ErrorDataResult<ErrorDTO>(validationError));
+                }
 
                 var user = _dbContext.Users.FirstOrDefault(u => u.FirstName == request.FirstName);
                 if (user == null)
-                    return NotFound(new ErrorDataResult<object>(Messages.User.NotFound, 404));
+                {
+                    var notFoundError = new ErrorDTO
+                    {
+                        Name = "UserNotFoundException",
+                        Message = Messages.User.NotFound
+                    };
+                    _errorOperations.AddError(notFoundError);
+                    return NotFound(new ErrorDataResult<ErrorDTO>(notFoundError));
+                }
 
                 var hashedPassword = HashingHelper.HashPassword(request.Password);
                 if (user.Password != hashedPassword)
-                    return Unauthorized(new ErrorDataResult<object>(Messages.User.InvalidCredentials, 401));
+                {
+                    var authError = new ErrorDTO
+                    {
+                        Name = "InvalidCredentialsError",
+                        Message = Messages.User.InvalidCredentials
+                    };
+                    _errorOperations.AddError(authError);
+                    return Unauthorized(new ErrorDataResult<ErrorDTO>(authError));
+                }
 
                 var token = TokenHelper.GenerateToken(user.Id, user.FirstName);
                 
@@ -77,7 +101,7 @@ namespace Challenge.API.Controllers
                 _ => 500
             };
 
-            return StatusCode(statusCode, new ErrorDataResult<object>(error.Message, statusCode));
+            return StatusCode(statusCode, new ErrorDataResult<ErrorDTO>(error));
         }
     }
 }

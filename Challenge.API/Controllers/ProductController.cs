@@ -32,7 +32,15 @@ namespace Challenge.API.Controllers
                 var products = _productOperations.GetProducts();
 
                 if (products == null || !products.Any())
-                    return NotFound(new ErrorDataResult<object>(Messages.Product.NotFound, 404));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "ProductNotFoundException",
+                        Message = Messages.Product.NotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return NotFound(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var data = products.Select(product => new
                 {
@@ -71,7 +79,7 @@ namespace Challenge.API.Controllers
                 _ => 500
             };
 
-            return StatusCode(statusCode, new ErrorDataResult<object>(error.Message, statusCode));
+            return StatusCode(statusCode, new ErrorDataResult<ErrorDTO>(error));
         }
     }
 }

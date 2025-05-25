@@ -42,12 +42,28 @@ namespace Challenge.API.Controllers
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
-                    return Unauthorized(new ErrorDataResult<object>(Messages.Authentication.UserIdNotFound, 401));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "UnauthorizedAccessError",
+                        Message = Messages.Authentication.UserIdNotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return Unauthorized(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var userId = Guid.Parse(userIdClaim.Value);
                 var balance = _balanceOperations.GetBalanceByUserId(userId);
                 if (balance == null)
-                    return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "BalanceNotFoundException",
+                        Message = Messages.Balance.NotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return NotFound(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var data = new
                 {
@@ -75,11 +91,27 @@ namespace Challenge.API.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                    return BadRequest(new ErrorDataResult<object>(Messages.Balance.ValidationError, 400));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "ValidationError",
+                        Message = Messages.Balance.ValidationError
+                    };
+                    _errorOperations.AddError(error);
+                    return BadRequest(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
-                    return Unauthorized(new ErrorDataResult<object>(Messages.Authentication.UserIdNotFound, 401));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "UnauthorizedAccessError",
+                        Message = Messages.Authentication.UserIdNotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return Unauthorized(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var userId = Guid.Parse(userIdClaim.Value);
                 
@@ -89,20 +121,52 @@ namespace Challenge.API.Controllers
                 {
                     var dbProduct = _dbContext.Products.FirstOrDefault(p => p.Id == product.ProductId);
                     if (dbProduct == null)
-                        return BadRequest(new ErrorDataResult<object>(string.Format(Messages.PreOrder.ProductNotFound, product.ProductId), 400));
+                    {
+                        var error = new ErrorDTO
+                        {
+                            Name = "ProductNotFoundException",
+                            Message = string.Format(Messages.PreOrder.ProductNotFound, product.ProductId)
+                        };
+                        _errorOperations.AddError(error);
+                        return BadRequest(new ErrorDataResult<ErrorDTO>(error));
+                    }
                     
                     if (dbProduct.Stock < product.Quantity)
-                        return BadRequest(new ErrorDataResult<object>(string.Format(Messages.PreOrder.InsufficientStock, dbProduct.Name, dbProduct.Stock, product.Quantity), 400));
+                    {
+                        var error = new ErrorDTO
+                        {
+                            Name = "InsufficientStockError",
+                            Message = string.Format(Messages.PreOrder.InsufficientStock, dbProduct.Name, dbProduct.Stock, product.Quantity)
+                        };
+                        _errorOperations.AddError(error);
+                        return BadRequest(new ErrorDataResult<ErrorDTO>(error));
+                    }
                     
                     totalAmount += (double)(dbProduct.Price ?? 0) * product.Quantity;
                 }
 
                 var balance = _balanceOperations.GetBalanceByUserId(userId);
                 if (balance == null)
-                    return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "BalanceNotFoundException",
+                        Message = Messages.Balance.NotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return NotFound(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 if (balance.AvailableBalance < (double)totalAmount)
-                    return BadRequest(new ErrorDataResult<object>(Messages.Balance.InsufficientBalance, 400));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "InsufficientBalanceError",
+                        Message = Messages.Balance.InsufficientBalance
+                    };
+                    _errorOperations.AddError(error);
+                    return BadRequest(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 // Create PreOrder
                 var preOrder = new PreOrder
@@ -137,7 +201,15 @@ namespace Challenge.API.Controllers
                 balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
-                    return StatusCode(500, new ErrorDataResult<object>(Messages.Balance.UpdateFailed, 500));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "BalanceUpdateError",
+                        Message = Messages.Balance.UpdateFailed
+                    };
+                    _errorOperations.AddError(error);
+                    return StatusCode(500, new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 _dbContext.SaveChanges();
 
@@ -162,11 +234,27 @@ namespace Challenge.API.Controllers
             try
             {
                 if (orderId == Guid.Empty)
-                    return BadRequest(new ErrorDataResult<object>(Messages.PreOrder.InvalidOrderId, 400));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "InvalidOrderIdError",
+                        Message = Messages.PreOrder.InvalidOrderId
+                    };
+                    _errorOperations.AddError(error);
+                    return BadRequest(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
-                    return Unauthorized(new ErrorDataResult<object>(Messages.Authentication.UserIdNotFound, 401));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "UnauthorizedAccessError",
+                        Message = Messages.Authentication.UserIdNotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return Unauthorized(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var userId = Guid.Parse(userIdClaim.Value);
                 var preOrder = _dbContext.PreOrders
@@ -175,20 +263,52 @@ namespace Challenge.API.Controllers
                     .FirstOrDefault(po => po.Id == orderId && po.UserId == userId);
                     
                 if (preOrder == null)
-                    return NotFound(new ErrorDataResult<object>(Messages.PreOrder.NotFound, 404));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "PreOrderNotFoundException",
+                        Message = Messages.PreOrder.NotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return NotFound(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 if (preOrder.CompletedAt != null)
-                    return BadRequest(new ErrorDataResult<object>(Messages.PreOrder.AlreadyCompleted, 400));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "PreOrderAlreadyCompletedError",
+                        Message = Messages.PreOrder.AlreadyCompleted
+                    };
+                    _errorOperations.AddError(error);
+                    return BadRequest(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var balance = _balanceOperations.GetBalanceByUserId(userId);
                 if (balance == null)
-                    return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "BalanceNotFoundException",
+                        Message = Messages.Balance.NotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return NotFound(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 balance.BlockedBalance -= preOrder.Amount;
                 balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
-                    return StatusCode(500, new ErrorDataResult<object>(Messages.Balance.UpdateFailed, 500));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "BalanceUpdateError",
+                        Message = Messages.Balance.UpdateFailed
+                    };
+                    _errorOperations.AddError(error);
+                    return StatusCode(500, new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 preOrder.Status = "Completed";
                 preOrder.CompletedAt = DateTime.UtcNow;
@@ -217,11 +337,27 @@ namespace Challenge.API.Controllers
             try
             {
                 if (orderId == Guid.Empty)
-                    return BadRequest(new ErrorDataResult<object>(Messages.PreOrder.InvalidOrderId, 400));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "InvalidOrderIdError",
+                        Message = Messages.PreOrder.InvalidOrderId
+                    };
+                    _errorOperations.AddError(error);
+                    return BadRequest(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
-                    return Unauthorized(new ErrorDataResult<object>(Messages.Authentication.UserIdNotFound, 401));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "UnauthorizedAccessError",
+                        Message = Messages.Authentication.UserIdNotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return Unauthorized(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var userId = Guid.Parse(userIdClaim.Value);
                 var preOrder = _dbContext.PreOrders
@@ -230,17 +366,49 @@ namespace Challenge.API.Controllers
                     .FirstOrDefault(po => po.Id == orderId && po.UserId == userId);
                     
                 if (preOrder == null)
-                    return NotFound(new ErrorDataResult<object>(Messages.PreOrder.NotFound, 404));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "PreOrderNotFoundException",
+                        Message = Messages.PreOrder.NotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return NotFound(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 if (preOrder.CompletedAt != null)
-                    return BadRequest(new ErrorDataResult<object>(Messages.PreOrder.AlreadyCompletedCantCancel, 400));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "PreOrderAlreadyCompletedError",
+                        Message = Messages.PreOrder.AlreadyCompletedCantCancel
+                    };
+                    _errorOperations.AddError(error);
+                    return BadRequest(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 if (preOrder.CancelledAt != null)
-                    return BadRequest(new ErrorDataResult<object>(Messages.PreOrder.AlreadyCancelled, 400));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "PreOrderAlreadyCancelledError",
+                        Message = Messages.PreOrder.AlreadyCancelled
+                    };
+                    _errorOperations.AddError(error);
+                    return BadRequest(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 var balance = _balanceOperations.GetBalanceByUserId(userId);
                 if (balance == null)
-                    return NotFound(new ErrorDataResult<object>(Messages.Balance.NotFound, 404));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "BalanceNotFoundException",
+                        Message = Messages.Balance.NotFound
+                    };
+                    _errorOperations.AddError(error);
+                    return NotFound(new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 // Restore product stocks
                 foreach (var preOrderProduct in preOrder.PreOrderProducts)
@@ -253,7 +421,15 @@ namespace Challenge.API.Controllers
                 balance.LastUpdated = DateTime.UtcNow;
 
                 if (!_balanceOperations.UpdateBalance(balance))
-                    return StatusCode(500, new ErrorDataResult<object>(Messages.Balance.UpdateFailed, 500));
+                {
+                    var error = new ErrorDTO
+                    {
+                        Name = "BalanceUpdateError",
+                        Message = Messages.Balance.UpdateFailed
+                    };
+                    _errorOperations.AddError(error);
+                    return StatusCode(500, new ErrorDataResult<ErrorDTO>(error));
+                }
 
                 preOrder.Status = "Cancelled";
                 preOrder.CancelledAt = DateTime.UtcNow;
@@ -293,7 +469,7 @@ namespace Challenge.API.Controllers
                 _ => 500
             };
 
-            return StatusCode(statusCode, new ErrorDataResult<object>(error.Message, statusCode));
+            return StatusCode(statusCode, new ErrorDataResult<ErrorDTO>(error));
         }
     }
 }
