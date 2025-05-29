@@ -31,7 +31,8 @@ namespace Challenge.Business.BalanceOperations
         /// <returns><c>true</c> if the balance was updated successfully; otherwise, <c>false</c>.</returns>
         public bool UpdateBalance(BalanceDTO balanceDTO)
         {
-            return _balanceManager.UpdateBalance(balanceDTO);
+            var balance = _balanceManager.UpdateBalance(balanceDTO);
+            return balance;
         }
         /// <summary>
         /// Delegates the retrieval of balance information for the specified user to the balance manager.

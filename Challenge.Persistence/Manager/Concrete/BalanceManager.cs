@@ -49,7 +49,7 @@ namespace Challenge.Persistence.Manager.Concrete
                 _mapper.Map(balanceDTO, balance);
 
                 _balanceRepository.Update(balance);
-                _balanceRepository.SaveChanges();
+                _balanceRepository.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)

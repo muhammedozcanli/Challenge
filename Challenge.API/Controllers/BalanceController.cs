@@ -15,6 +15,10 @@ using System.Security.Claims;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Challenge.API.Examples;
+using Challenge.API.Examples.Requests;
+using Challenge.API.Examples.Responses;
+using Challenge.Business.ProductOperations;
+using Challenge.Business.PreOrderOperations;
 
 namespace Challenge.API.Controllers
 {
@@ -26,16 +30,22 @@ namespace Challenge.API.Controllers
         private readonly IBalanceOperations _balanceOperations;
         private readonly IErrorOperations _errorOperations;
         private readonly ChallengeDBContext _dbContext;
+        private readonly IProductOperations _productOperations;
+        private readonly IPreOrderOperations _preOrderOperations;
 
-        public BalanceController(IBalanceOperations balanceOperations, IErrorOperations errorOperations, ChallengeDBContext dBContext)
+        public BalanceController(IBalanceOperations balanceOperations, IErrorOperations errorOperations, IProductOperations productOperations, ChallengeDBContext dBContext, IPreOrderOperations preOrderOperations)
         {
             _dbContext = dBContext;
             _balanceOperations = balanceOperations;
             _errorOperations = errorOperations;
+            _productOperations = productOperations;
+            _preOrderOperations = preOrderOperations;
         }
 
         [HttpGet]
         [SwaggerOperation(Summary = "Get user balance", Description = "Retrieves the current balance information for the user")]
+        [SwaggerResponseExample(StatusCodes.Status200OK, typeof(BalanceResponseExample))]
+        [ProducesResponseType(typeof(SuccessDataResult<object>), StatusCodes.Status200OK)]
         public IActionResult GetBalance()
         {
             try
@@ -86,7 +96,7 @@ namespace Challenge.API.Controllers
         [SwaggerRequestExample(typeof(PreOrderDTO), typeof(PreOrderRequestExample))]
         [SwaggerResponseExample(StatusCodes.Status200OK, typeof(PreOrderResponseExample))]
         [ProducesResponseType(typeof(PreOrderResponseDTO), StatusCodes.Status200OK)]
-        public IActionResult CreatePreOrder([FromBody] PreOrderDTO request)
+        public async Task<IActionResult> CreatePreOrderAsync([FromBody] PreOrderDTO request)
         {
             try
             {
@@ -119,7 +129,7 @@ namespace Challenge.API.Controllers
                 double totalAmount = 0;
                 foreach (var product in request.Products)
                 {
-                    var dbProduct = _dbContext.Products.FirstOrDefault(p => p.Id == product.ProductId);
+                    var dbProduct = _productOperations.GetProduct(product.ProductId);
                     if (dbProduct == null)
                     {
                         var error = new ErrorDTO
@@ -182,11 +192,11 @@ namespace Challenge.API.Controllers
                 // Create PreOrderProducts and update stocks
                 foreach (var product in request.Products)
                 {
-                    var dbProduct = _dbContext.Products.First(p => p.Id == product.ProductId);
+                    var dbProduct = _productOperations.GetProduct(product.ProductId);
                     
                     var preOrderProduct = new PreOrderProduct
                     {
-                        PreOrderId = preOrder.Id,
+                        PreOrder = preOrder,
                         ProductId = product.ProductId,
                         Quantity = product.Quantity
                     };
@@ -211,7 +221,7 @@ namespace Challenge.API.Controllers
                     return StatusCode(500, new ErrorDataResult<ErrorDTO>(error, Messages.Balance.UpdateFailed, 500));
                 }
 
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 var response = new
                 {
@@ -229,7 +239,10 @@ namespace Challenge.API.Controllers
 
         [HttpPost("complete")]
         [SwaggerOperation(Summary = "Complete an order", Description = "Completes a pre-order by deducting the blocked amount from the total balance")]
-        public IActionResult CompleteOrder([FromBody] Guid orderId)
+        //[SwaggerRequestExample(typeof(Guid), typeof(OrderIdRequestExample))]
+        [SwaggerResponseExample(StatusCodes.Status200OK, typeof(OrderCompletionResponseExample))]
+        [ProducesResponseType(typeof(SuccessDataResult<object>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> CompleteOrderAsync([FromBody] Guid orderId)
         {
             try
             {
@@ -257,10 +270,10 @@ namespace Challenge.API.Controllers
                 }
 
                 var userId = Guid.Parse(userIdClaim.Value);
-                var preOrder = _dbContext.PreOrders
+                var preOrder = await _dbContext.PreOrders
                     .Include(po => po.PreOrderProducts)
                     .ThenInclude(pop => pop.Product)
-                    .FirstOrDefault(po => po.Id == orderId && po.UserId == userId);
+                    .FirstOrDefaultAsync(po => po.Id == orderId && po.UserId == userId);
                     
                 if (preOrder == null)
                 {
@@ -313,8 +326,7 @@ namespace Challenge.API.Controllers
                 preOrder.Status = "Completed";
                 preOrder.CompletedAt = DateTime.UtcNow;
 
-                _dbContext.PreOrders.Update(preOrder);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 var response = new
                 {
@@ -332,7 +344,10 @@ namespace Challenge.API.Controllers
 
         [HttpPost("cancel")]
         [SwaggerOperation(Summary = "Cancel a pre-order", Description = "Cancels a pre-order and returns the blocked amount to the available balance")]
-        public IActionResult CancelOrder([FromBody] Guid orderId)
+        //[SwaggerRequestExample(typeof(Guid), typeof(OrderIdRequestExample))]
+        [SwaggerResponseExample(StatusCodes.Status200OK, typeof(OrderCancellationResponseExample))]
+        [ProducesResponseType(typeof(SuccessDataResult<object>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> CancelOrderAsync([FromBody] Guid orderId)
         {
             try
             {
@@ -360,10 +375,10 @@ namespace Challenge.API.Controllers
                 }
 
                 var userId = Guid.Parse(userIdClaim.Value);
-                var preOrder = _dbContext.PreOrders
+                var preOrder = await _dbContext.PreOrders
                     .Include(po => po.PreOrderProducts)
                     .ThenInclude(pop => pop.Product)
-                    .FirstOrDefault(po => po.Id == orderId && po.UserId == userId);
+                    .FirstOrDefaultAsync(po => po.Id == orderId && po.UserId == userId);
                     
                 if (preOrder == null)
                 {
@@ -434,8 +449,7 @@ namespace Challenge.API.Controllers
                 preOrder.Status = "Cancelled";
                 preOrder.CancelledAt = DateTime.UtcNow;
 
-                _dbContext.PreOrders.Update(preOrder);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 var response = new
                 {

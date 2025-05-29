@@ -25,10 +25,16 @@ namespace Challenge.Persistence.Manager.Concrete
         /// Retrieves a list of all available products from the data source.
         /// </summary>
         /// <returns>A collection of <see cref="ProductDTO"/> representing the available products.</returns>
-        public IEnumerable<ProductDTO> GetProducts()
+        public async Task<IEnumerable<ProductDTO>> GetProducts()
         {
-            var products = _productRepository.GetList();
+            var products = await _productRepository.GetListAsync(null);
             var productDTO = _mapper.Map<List<ProductDTO>>(products);
+            return productDTO;
+        }
+        public ProductDTO GetProduct(Guid id)
+        {
+            var product = _productRepository.Get(p => p.Id == id);
+            var productDTO = _mapper.Map<ProductDTO>(product);
             return productDTO;
         }
 

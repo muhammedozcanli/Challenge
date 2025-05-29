@@ -9,6 +9,7 @@ namespace Challenge.Persistence.Manager.Abstract
 {
     public interface IProductManager
     {
-        IEnumerable<ProductDTO> GetProducts();
+        Task<IEnumerable<ProductDTO>> GetProducts();
+        ProductDTO GetProduct(Guid id);
     }
 }

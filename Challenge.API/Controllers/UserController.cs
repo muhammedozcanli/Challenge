@@ -1,4 +1,6 @@
-﻿using Challenge.Business.ErrorOperations;
+﻿using Challenge.API.Examples.Requests;
+using Challenge.API.Examples.Responses;
+using Challenge.Business.ErrorOperations;
 using Challenge.Business.UserOperations;
 using Challenge.Common.Constants;
 using Challenge.Common.Security;
@@ -6,7 +8,9 @@ using Challenge.Common.Utilities.Result.Concrete;
 using Challenge.Persistence;
 using Challenge.Persistence.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace Challenge.API.Controllers
 {
@@ -27,7 +31,13 @@ namespace Challenge.API.Controllers
 
         [HttpPost("login")]
         [SwaggerOperation(Summary = "User login", Description = "Authenticates a user and returns a JWT token")]
-        public IActionResult Login([FromBody] LoginDTO request)
+        [SwaggerRequestExample(typeof(LoginDTO), typeof(LoginRequestExample))]
+        [SwaggerResponseExample(StatusCodes.Status200OK, typeof(LoginResponseExample))]
+        [ProducesResponseType(typeof(SuccessDataResult<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorDataResult<ErrorDTO>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorDataResult<ErrorDTO>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ErrorDataResult<ErrorDTO>), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Login([FromBody] LoginDTO request)
         {
             try
             {
@@ -42,20 +52,10 @@ namespace Challenge.API.Controllers
                     return BadRequest(new ErrorDataResult<ErrorDTO>(validationError));
                 }
 
-                var user = _dbContext.Users.FirstOrDefault(u => u.FirstName == request.FirstName);
-                if (user == null)
-                {
-                    var notFoundError = new ErrorDTO
-                    {
-                        Name = "UserNotFoundException",
-                        Message = Messages.User.NotFound
-                    };
-                    _errorOperations.AddError(notFoundError);
-                    return NotFound(new ErrorDataResult<ErrorDTO>(notFoundError, Messages.User.NotFound, 400));
-                }
+                var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.FirstName == request.FirstName);
 
                 var hashedPassword = HashingHelper.HashPassword(request.Password);
-                if (user.Password != hashedPassword)
+                if (user == null || user.Password != hashedPassword)
                 {
                     var authError = new ErrorDTO
                     {

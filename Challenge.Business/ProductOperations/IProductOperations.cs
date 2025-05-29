@@ -9,6 +9,7 @@ namespace Challenge.Business.ProductOperations
 {
     public interface IProductOperations
     {
-        IEnumerable<ProductDTO> GetProducts();
+        Task<IEnumerable<ProductDTO>> GetProducts();
+        ProductDTO GetProduct(Guid id);
     }
 }

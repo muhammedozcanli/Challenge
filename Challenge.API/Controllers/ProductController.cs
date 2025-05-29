@@ -1,4 +1,5 @@
-﻿using Challenge.Business.BalanceOperations;
+﻿using Challenge.API.Examples.Responses;
+using Challenge.Business.BalanceOperations;
 using Challenge.Business.ErrorOperations;
 using Challenge.Business.ProductOperations;
 using Challenge.Common.Constants;
@@ -7,6 +8,7 @@ using Challenge.Persistence.DTOs;
 using Challenge.Persistence.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace Challenge.API.Controllers
 {
@@ -25,11 +27,13 @@ namespace Challenge.API.Controllers
 
         [HttpGet]
         [SwaggerOperation(Summary = "Get products and prices", Description = "Retrieves a list of all available products with their prices")]
-        public IActionResult GetProducts()
+        [SwaggerResponseExample(StatusCodes.Status200OK, typeof(ProductResponseExample))]
+        [ProducesResponseType(typeof(List<ProductDTO>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetProducts()
         {
             try
             {
-                var products = _productOperations.GetProducts();
+                var products = await _productOperations.GetProducts();
 
                 if (products == null || !products.Any())
                 {
