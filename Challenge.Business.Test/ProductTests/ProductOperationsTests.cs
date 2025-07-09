@@ -20,7 +20,7 @@ public class ProductOperationsTests
     }
 
     [Fact]
-    public void GetProducts_ShouldReturnProducts_WhenProductsExist()
+    public async Task GetProducts_ShouldReturnProducts_WhenProductsExist()
     {
         // Arrange
         var products = new List<ProductDTO>
@@ -28,10 +28,10 @@ public class ProductOperationsTests
             new ProductDTO { Id = Guid.NewGuid(), Name = "Product 1", Price = 100, Stock = 10 },
             new ProductDTO { Id = Guid.NewGuid(), Name = "Product 2", Price = 200, Stock = 20 }
         };
-        _mockProductManager.Setup(manager => manager.GetProducts()).Returns(products);
+        _mockProductManager.Setup(manager => manager.GetProducts()).ReturnsAsync(products);
 
         // Act
-        var result = _productOperations.GetProducts();
+        var result = await _productOperations.GetProducts();
 
         // Assert
         Assert.NotNull(result);
@@ -40,13 +40,13 @@ public class ProductOperationsTests
     }
 
     [Fact]
-    public void GetProducts_ShouldReturnEmptyList_WhenNoProductsExist()
+    public async Task GetProducts_ShouldReturnEmptyList_WhenNoProductsExist()
     {
         // Arrange
-        _mockProductManager.Setup(manager => manager.GetProducts()).Returns(new List<ProductDTO>());
+        _mockProductManager.Setup(manager => manager.GetProducts()).ReturnsAsync(new List<ProductDTO>());
 
         // Act
-        var result = _productOperations.GetProducts();
+        var result = await _productOperations.GetProducts();
 
         // Assert
         Assert.Empty(result);

@@ -43,7 +43,7 @@ namespace Challenge.API.Controllers
                         Message = Messages.Product.NotFound
                     };
                     _errorOperations.AddError(error);
-                    return NotFound(new ErrorDataResult<ErrorDTO>(error, Messages.Product.NotFound));
+                    return NotFound(new ErrorDataResult<ErrorDTO>(error, null));
                 }
 
                 var data = products.Select(product => new

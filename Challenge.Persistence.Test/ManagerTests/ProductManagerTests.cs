@@ -23,7 +23,7 @@ namespace Challenge.Persistence.Test.ManagerTests
         }
 
         [Fact]
-        public void GetProducts_ShouldReturnProductDTOs_WhenProductsExist()
+        public async Task GetProducts_ShouldReturnProductDTOs_WhenProductsExist()
         {
             // Arrange
             var products = new List<Product>
@@ -38,36 +38,36 @@ namespace Challenge.Persistence.Test.ManagerTests
                 new ProductDTO { Id = products[1].Id, Name = "Product 2", Price = 200, Stock = 20 }
             };
 
-            _mockProductRepository.Setup(repo => repo.GetList(null)).Returns(products);
+            _mockProductRepository.Setup(repo => repo.GetListAsync(null)).ReturnsAsync(products);
             _mockMapper.Setup(mapper => mapper.Map<List<ProductDTO>>(products)).Returns(productDtos);
 
             // Act
-            var result = _productManager.GetProducts();
+            var result = await _productManager.GetProducts();
 
             // Assert
             Assert.NotNull(result);
             result.Should().BeEquivalentTo(productDtos);
-            _mockProductRepository.Verify(repo => repo.GetList(null), Times.Once);
+            _mockProductRepository.Verify(repo => repo.GetListAsync(null), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<List<ProductDTO>>(products), Times.Once);
         }
 
         [Fact]
-        public void GetProducts_ShouldReturnEmptyList_WhenNoProductsExist()
+        public async Task GetProducts_ShouldReturnEmptyList_WhenNoProductsExist()
         {
             // Arrange
             var products = new List<Product>();
             var productDtos = new List<ProductDTO>();
 
-            _mockProductRepository.Setup(repo => repo.GetList(null)).Returns(products);
+            _mockProductRepository.Setup(repo => repo.GetListAsync(null)).ReturnsAsync(products);
             _mockMapper.Setup(mapper => mapper.Map<List<ProductDTO>>(products)).Returns(productDtos);
 
             // Act
-            var result = _productManager.GetProducts();
+            var result = await _productManager.GetProducts();
 
             // Assert
             Assert.NotNull(result);
             Assert.Empty(result);
-            _mockProductRepository.Verify(repo => repo.GetList(null), Times.Once);
+            _mockProductRepository.Verify(repo => repo.GetListAsync(null), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<List<ProductDTO>>(products), Times.Once);
         }
     }

@@ -63,7 +63,7 @@ namespace Challenge.API.Controllers
                         Message = Messages.User.InvalidCredentials
                     };
                     _errorOperations.AddError(authError);
-                    return Unauthorized(new ErrorDataResult<ErrorDTO>(authError, Messages.User.InvalidCredentials, 401));
+                    return Unauthorized(new ErrorDataResult<ErrorDTO>(authError, null, 401));
                 }
 
                 var token = TokenHelper.GenerateToken(user.Id, user.FirstName);
@@ -72,7 +72,7 @@ namespace Challenge.API.Controllers
                 {
                     userId = user.Id,
                     firstName = user.FirstName,
-                    token = token
+                    token
                 };
 
                 return Ok(new SuccessDataResult<object>(responseData, Messages.User.LoginSuccess));

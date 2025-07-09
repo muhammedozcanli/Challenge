@@ -9,7 +9,7 @@ namespace Challenge.API.Examples.Requests
         {
             return new LoginDTO
             {
-                FirstName = "john.doe",
+                FirstName = "User",
                 Password = "password123"
             };
         }
